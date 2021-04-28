@@ -29,12 +29,17 @@
   },
   "dependencies": {
     "core-js": "^3.9.1",
+    "provide-js": "^1.6.1",
     "regenerator-runtime": "^0.13.7"
   },
   "devDependencies": {
-    "@babel/core": "^7.13.10",
+    "@babel/core": "^7.13.16",
+    "@babel/plugin-transform-runtime": "^7.13.15",
+    "@babel/preset-env": "^7.13.15",
     "@babel/preset-typescript": "^7.13.0",
+    "@provide/types": "^1.2.1",
     "@types/find-process": "1.2.0",
+    "@types/jquery": "^3.5.5",
     "@types/office-js": "^1.0.160",
     "@types/office-runtime": "^1.0.17",
     "babel-loader": "^8.2.2",

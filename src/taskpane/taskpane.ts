@@ -1,41 +1,56 @@
-/*
- * Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT license.
- * See LICENSE in the project root for license information.
- */
+import { IdentClient, authenticate } from "./identClient";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 
-/* global console, document, Excel, Office */
+
+// eslint-disable-next-line no-unused-vars
+/* global window, console, alert, document, Excel, Office, $ */
 
 Office.onReady((info) => {
+  // console.log('P1');
+  // debugger;
+  // document.getElementById('aaaaa').textContent = info.host.toString();
+  
   if (info.host === Office.HostType.Excel) {
-    document.getElementById("sideload-msg").style.display = "none";
-    document.getElementById("app-body").style.display = "flex";
-    document.getElementById("run").onclick = run;
+    // if (!Office.context.requirements.isSetSupported('ExcelApi', '1.8')) {
+    //   document.getElementById('bbbbb').textContent = 'Sorry. The tutorial add-in uses Excel.js APIs that are not available in your version of Office.';
+    // } else {
+    //   document.getElementById('bbbbb').textContent = 'Support 1.8.';
+    // }
+
+    $(function () {
+      initUi();
+    });
   }
 });
 
-export async function run() {
-  try {
-    await Excel.run(async (context) => {
-      /**
-       * Insert your Excel code here
-       */
-      const range = context.workbook.getSelectedRange();
+function initUi() {
+  $("#sideload-msg").hide();
+  $("#login-ui").show();
+  $("#work-ui").hide();
+  $("#app-body").show();
+  $("#login-btn").on("click", login);
+}
 
-      // Read the range address
-      range.load("address");
+function setUiAfterLogin() {
+  let workUi = $("#work-ui");
+  identClient.getUserFullName().then((userFullName) => {
+    $("#user-name", workUi).text(userFullName);
+    $("#login-ui").hide();
+    workUi.show();
+  });
+}
 
-      // Update the fill color
-      range.format.fill.color = "yellow";
-
-      await context.sync();
-      console.log(`The range address was ${range.address}.`);
-    });
-  } catch (error) {
-    console.error(error);
-  }
+let identClient: IdentClient;
+function login() {
+  let email = <string>$("#email").val();
+  let password = <string>$("#password").val();
+  console.log("login", email, password);
+  authenticate(email, password).then((client) => {
+    identClient = client;
+    setUiAfterLogin();
+  });
 }

@@ -3,52 +3,92 @@
 
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Contoso Task Pane Add-in</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shuttle Excel</title>
+
+    <!-- jQuery -->
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.js"></script>
+    <!-- <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script> -->
 
     <!-- Office JavaScript API -->
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
 
     <!-- For more information on Office UI Fabric, visit https://developer.microsoft.com/fabric. -->
-    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/>
+    <!-- <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/> -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
+      integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
+      crossorigin="anonymous"
+    />
 
     <!-- Template styles -->
     <link href="taskpane.css" rel="stylesheet" type="text/css" />
-</head>
+  </head>
 
-<body class="ms-font-m ms-welcome ms-Fabric">
-    <header class="ms-welcome__header ms-bgColor-neutralLighter">
-        <img width="90" height="90" src="../../assets/logo-filled.png" alt="Contoso" title="Contoso" />
-        <h1 class="ms-font-su">Welcome</h1>
-    </header>
-    <section id="sideload-msg" class="ms-welcome__main">
-        <h2 class="ms-font-xl">Please sideload your add-in to see app body.</h2>
+  <body class="bg-dark">
+    <section id="sideload-msg" class="text-light text-center">
+      <h2 class="ms-font-xl">Loading...</h2>
+      <!-- <h3 id="aaaaa">not work</h3>
+      <h3 id="bbbbb">not work</h3> -->
     </section>
-    <main id="app-body" class="ms-welcome__main" style="display: none;">
-        <h2 class="ms-font-xl"> Discover what Office Add-ins can do for you today! </h2>
-        <ul class="ms-List ms-welcome__features">
-            <li class="ms-ListItem">
-                <i class="ms-Icon ms-Icon--Ribbon ms-font-xl"></i>
-                <span class="ms-font-m">Achieve more with Office integration</span>
-            </li>
-            <li class="ms-ListItem">
-                <i class="ms-Icon ms-Icon--Unlock ms-font-xl"></i>
-                <span class="ms-font-m">Unlock features and functionality</span>
-            </li>
-            <li class="ms-ListItem">
-                <i class="ms-Icon ms-Icon--Design ms-font-xl"></i>
-                <span class="ms-font-m">Create and visualize like a pro</span>
-            </li>
-        </ul>
-        <p class="ms-font-l">Modify the source files, then click <b>Run</b>.</p>
-        <div role="button" id="run" class="ms-welcome__action ms-Button ms-Button--hero ms-font-xl">
-            <span class="ms-Button-label">Run</span>
+    <main id="app-body" class="h-100" style="display: none">
+      <div id="login-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none; min-height: 29rem">
+        <div class="card-header border-0 bg-transparent d-flex justify-content-center">
+          <div>
+            <img src="../../assets/logo-filled.png" class="img-fluid" style="max-width: 9rem" />
+            <div class="text-center text-monospace">Welcome to Sia.</div>
+          </div>
         </div>
+        <div class="card-body border-0 bg-transparent">
+          <form class="bg-secondary p-3">
+            <div class="form-group">
+              <input
+                type="email"
+                id="email"
+                class="form-control bg-transparent text-light shadow-none"
+                placeholder="Email*"
+              />
+            </div>
+            <div class="form-group">
+              <input
+                type="password"
+                id="password"
+                class="form-control bg-transparent text-light shadow-none"
+                placeholder="Password*"
+              />
+            </div>
+            <div>
+              <button type="button" id="login-btn" class="btn btn-primary btn-lg btn-block text-light shadow-none">
+                LOGIN
+              </button>
+            </div>
+          </form>
+        </div>
+        <div class="card-footer border-0 bg-transparent container text-muted">
+          <div class="row text-monospace">
+            <div class="col text-truncate">2020 Vision (Provide)</div>
+            <div class="col text-right text-truncate">revision: 4dc70e3 (dirty)</div>
+          </div>
+        </div>
+      </div>
+      <div id="work-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none">
+        <div class="card-header border-0 bg-transparent">
+          <span id="user-name"></span>
+        </div>
+        <div class="card-body border-0 bg-transparent">
+          <div>TDB</div>
+        </div>
+        <div class="card-footer border-0 bg-transparent container text-muted">
+          <div class="row text-monospace">
+            <div class="col text-truncate">2020 Vision (Provide)</div>
+            <div class="col text-right text-truncate">revision: 4dc70e3 (dirty)</div>
+          </div>
+        </div>
+      </div>
     </main>
-</body>
-
+  </body>
 </html>
