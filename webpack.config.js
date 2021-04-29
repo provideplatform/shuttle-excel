@@ -28,7 +28,6 @@ module.exports = async (env, options) => {
         {
             test: /\.m?js$/,
             exclude: [
-                /(bower_components)/,
                 /node_modules[\\\/]core-js/,
                 /node_modules[\\\/]webpack[\\\/]buildin/,
             ],

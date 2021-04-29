@@ -1,26 +1,17 @@
-import { IdentClient, authenticate } from "./identClient";
+import { IdentClient, authenticate } from "./ident-client";
+import { alerts } from "./alerts";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
-
+import { LoginFormData } from "./login-form-data";
 
 // eslint-disable-next-line no-unused-vars
 /* global window, console, alert, document, Excel, Office, $ */
 
 Office.onReady((info) => {
-  // console.log('P1');
-  // debugger;
-  // document.getElementById('aaaaa').textContent = info.host.toString();
-  
   if (info.host === Office.HostType.Excel) {
-    // if (!Office.context.requirements.isSetSupported('ExcelApi', '1.8')) {
-    //   document.getElementById('bbbbb').textContent = 'Sorry. The tutorial add-in uses Excel.js APIs that are not available in your version of Office.';
-    // } else {
-    //   document.getElementById('bbbbb').textContent = 'Support 1.8.';
-    // }
-
     $(function () {
       initUi();
     });
@@ -36,21 +27,36 @@ function initUi() {
 }
 
 function setUiAfterLogin() {
-  let workUi = $("#work-ui");
+  let $workUi = $("#work-ui");
   identClient.getUserFullName().then((userFullName) => {
-    $("#user-name", workUi).text(userFullName);
+    $("#user-name", $workUi).text(userFullName);
     $("#login-ui").hide();
-    workUi.show();
+    $workUi.show();
   });
 }
 
 let identClient: IdentClient;
 function login() {
-  let email = <string>$("#email").val();
-  let password = <string>$("#password").val();
-  console.log("login", email, password);
-  authenticate(email, password).then((client) => {
+  var $form = $("#login-ui form");
+  const loginFormData = new LoginFormData($form);
+  const isValid = loginFormData.isValid();
+  if (isValid !== true) {
+    alerts.error(<string>isValid);
+    return;
+  }
+
+  authenticate(loginFormData).then((client) => {
     identClient = client;
     setUiAfterLogin();
-  });
+  }, onError);
+}
+
+function onError(reason) {
+  let message = reason.toString();
+  console.log(message);
+  if (message.indexOf("Error: ") == 0) {
+    message = message.substring("Error: ".length);
+  }
+
+  alerts.error(message);
 }

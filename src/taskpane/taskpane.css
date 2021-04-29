@@ -18,3 +18,9 @@ body {
   color: #96a0a8;
   opacity: 0.8;
 }
+
+.alert {
+  bottom: 5px;
+  left: 2%;
+  width: 96%;
+}
