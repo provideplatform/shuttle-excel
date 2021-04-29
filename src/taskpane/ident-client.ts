@@ -4,11 +4,17 @@ import { AuthenticationResponse, Token, User } from "@provide/types";
 export interface IdentClient {
   getToken(): Promise<string>;
   getUserFullName(): Promise<string>;
+  logout(): Promise<void>;
 }
 
 class IdentClientImpl implements IdentClient {
-  // eslint-disable-next-line no-unused-vars
-  constructor(private token: Token, private user: User) {}
+  private token: Token;
+  private user: User;
+
+  constructor(token: Token, user: User) {
+    this.token = token;
+    this.user = user;
+  }
 
   getToken(): Promise<string> {
     if (this.isExpired()) {
@@ -23,6 +29,11 @@ class IdentClientImpl implements IdentClient {
   getUserFullName(): Promise<string> {
     let fullName = [this.user?.firstName, this.user?.lastName].join(" ");
     return Promise.resolve(fullName);
+  }
+
+  logout(): Promise<void> {
+    let identService = new Ident(this.token.accessToken);
+    return identService.deleteToken(this.token.id);
   }
 
   private isExpired() {

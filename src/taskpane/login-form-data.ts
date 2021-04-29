@@ -4,7 +4,8 @@ export class LoginFormData implements AuthParams {
     public email: string;
     public password: string;
 
-    constructor($form) {
+    // eslint-disable-next-line no-undef
+    constructor($form: JQuery) {
         this.email = <string>$form.find('#email').val();
         this.password = <string>$form.find('#password').val();
      }

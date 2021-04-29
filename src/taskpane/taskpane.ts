@@ -1,4 +1,5 @@
-import { IdentClient, authenticate } from "./ident-client";
+// eslint-disable-next-line no-unused-vars
+import { IdentClient, authenticate, authenticateStub } from "./ident-client";
 import { alerts } from "./alerts";
 
 // images references in the manifest
@@ -8,7 +9,9 @@ import "../../assets/icon-80.png";
 import { LoginFormData } from "./login-form-data";
 
 // eslint-disable-next-line no-unused-vars
-/* global window, console, alert, document, Excel, Office, $ */
+/* global Excel, Office */
+
+let identClient: IdentClient | null;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
@@ -35,7 +38,6 @@ function setUiAfterLogin() {
   });
 }
 
-let identClient: IdentClient;
 function login() {
   var $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
@@ -45,7 +47,7 @@ function login() {
     return;
   }
 
-  authenticate(loginFormData).then((client) => {
+  authenticateStub(loginFormData).then((client) => {
     identClient = client;
     setUiAfterLogin();
   }, onError);

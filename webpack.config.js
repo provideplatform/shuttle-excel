@@ -28,8 +28,8 @@ module.exports = async (env, options) => {
         {
             test: /\.m?js$/,
             exclude: [
-                /node_modules[\\\/]core-js/,
-                /node_modules[\\\/]webpack[\\\/]buildin/,
+                /node_modules[\\/]core-js/,
+                /node_modules[\\/]webpack[\\/]buildin/,
             ],
             use: {
               loader: 'babel-loader',

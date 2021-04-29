@@ -10,14 +10,11 @@
     <title>Shuttle Excel</title>
 
     <!-- jQuery -->
-    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.js"></script>
-    <!-- <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script> -->
+    <!-- <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.js"></script> -->
+    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
 
     <!-- Office JavaScript API -->
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
-
-    <!-- For more information on Office UI Fabric, visit https://developer.microsoft.com/fabric. -->
-    <!-- <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/9.6.1/css/fabric.min.css"/> -->
 
     <!-- Bootstrap CSS -->
     <link
@@ -26,10 +23,23 @@
       integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
       crossorigin="anonymous"
     />
+    <!-- font-awesome -->
+    <link 
+      rel="stylesheet" 
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" 
+      integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" 
+      crossorigin="anonymous" />
 
     <!-- Bootstrap JS -->
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script> -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <!-- <script 
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" 
+      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" 
+      crossorigin="anonymous"></script> -->
+    <script
+      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+      crossorigin="anonymous"
+    ></script>
 
     <!-- Template styles -->
     <link href="taskpane.css" rel="stylesheet" type="text/css" />
@@ -40,6 +50,7 @@
       <h2 class="ms-font-xl">Loading...</h2>
     </section>
     <main id="app-body" class="h-100" style="display: none">
+
       <div id="login-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none; min-height: 29rem">
         <div class="card-header border-0 bg-transparent d-flex justify-content-center">
           <div>
@@ -79,9 +90,11 @@
           </div>
         </div>
       </div>
+
       <div id="work-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none">
         <div class="card-header border-0 bg-transparent">
-          <span id="user-name"></span>
+          <button class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
+          <div id="user-name" class="text-truncate"></div> 
         </div>
         <div class="card-body border-0 bg-transparent">
           <div>TDB</div>

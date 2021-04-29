@@ -1,30 +1,28 @@
-// eslint-disable-next-line no-unused-vars
-/* global window, console, setTimeout, document, Excel, Office, $ */
-
 class Alerts {
     private delay = 2000;
-    private alertContainer = '<div class="alert  position-fixed"></div>';
-    private closeBtn = '<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>';
+    private alertContainer = `
+    <div class="alert  position-fixed">
+        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+    </div>`;
 
-    error(message: string): void {
-        const alert = this.build('Error', message);
-        alert.addClass('alert-danger');
-        alert.appendTo($('body'));
-        setTimeout(() => { (<any>alert).alert('close') }, this.delay);
+    // eslint-disable-next-line no-undef
+    error(message: string, delay?: number): JQuery<HTMLElement> {
+        return this.build('Error', message, 'alert-danger', delay);
     }
 
-    success(message: string): void {
-        const alert = this.build('OK', message);
-        alert.addClass('alert-success');
-        alert.appendTo($('body'));
-        setTimeout(() => { (<any>alert).alert('close') }, this.delay);
+    // eslint-disable-next-line no-undef
+    success(message: string, delay?: number): JQuery<HTMLElement> {
+        return this.build('OK', message, 'alert-success', delay);
     }
 
-    private build(type: string, message: string) {
+    // eslint-disable-next-line no-undef
+    private build(type: string, message: string, alerClass: string, delay?: number): JQuery<HTMLElement> {
         const alert = $(this.alertContainer);
-        alert.append(this.closeBtn)
-            .append('<strong>'+ type +': </strong>')
-            .append('<span>'+ message +'</span>');
+        alert.append('<strong>'+ type +': </strong>')
+            .append('<span>'+ message +'</span>')
+            .addClass(alerClass)
+            .appendTo($('body'));
+        setTimeout(() => { (<any>alert).alert('close') }, delay ?? this.delay);
         return alert;
     }
 }

@@ -1,8 +1,12 @@
 {
+  "env": {
+    "browser": true,
+    "commonjs": true,
+    "es6": true,
+    "jquery": true
+  },
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ], 
+  "plugins": ["@typescript-eslint"],
   "parserOptions": {
     "ecmaVersion": 6,
     "sourceType": "module",
@@ -11,7 +15,5 @@
     },
     "project": "./tsconfig.json"
   },
-  "extends": [
-    "eslint-config-office-addins"
-  ]
+  "extends": ["eslint-config-office-addins"]
 }
