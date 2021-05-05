@@ -16,8 +16,14 @@ export class ExcelWorker {
   }
 
   private renderWorkgroups(context: Excel.RequestContext, applications: Application[]): void {
-    var currentWorksheet: Excel.Worksheet = context.workbook.worksheets.getActiveWorksheet();
-    var workgroupsTable: Excel.Table = currentWorksheet.tables.add("A1:F1", true /* hasHeaders */);
+    const currentWorksheet: Excel.Worksheet = context.workbook.worksheets.getActiveWorksheet();
+
+    let workgroupsTable: Excel.Table = currentWorksheet.tables.getItemOrNullObject("Workgroups");
+    if (workgroupsTable) {
+      workgroupsTable.delete();
+    }
+
+    workgroupsTable = currentWorksheet.tables.add("A1:F1", true /* hasHeaders */);
     workgroupsTable.name = "Workgroups";
 
     workgroupsTable.getHeaderRowRange().values = [["NetworkId", "UserId", "Name", "Description", "Type", "Hidden"]];
