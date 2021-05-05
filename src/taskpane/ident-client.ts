@@ -1,5 +1,5 @@
-import { Ident } from "provide-js";
-import { AuthenticationResponse } from "@provide/types";
+import { Ident, identClientFactory } from "provide-js";
+import { Application, AuthenticationResponse } from "@provide/types";
 import { Token as _Token } from "./models/token";
 import { User as _User } from "./models/user";
 
@@ -10,6 +10,8 @@ export interface IdentClient {
   getToken(): Promise<string>;
   getUserFullName(): Promise<string>;
   logout(): Promise<void>;
+
+  getWorkgroups(): Promise<Application[]>;
 }
 
 class IdentClientImpl implements IdentClient {
@@ -30,6 +32,7 @@ class IdentClientImpl implements IdentClient {
   }
 
   get isExpired(): boolean {
+    // return true;
     return new Date() > this.expiresAt;
   }
 
@@ -54,6 +57,13 @@ class IdentClientImpl implements IdentClient {
     return Promise.resolve();
   }
 
+  getWorkgroups(): Promise<Application[]> {
+    return this.executeWithAccessToken((accessToken) => {
+      let identService = identClientFactory(accessToken);
+      return identService.fetchApplications({});
+    })
+  }
+
   private initExpiresAt() {
     const expires_in = this.token.expires_in;
     this.expiresAt = new Date();
@@ -61,11 +71,22 @@ class IdentClientImpl implements IdentClient {
   }
 
   private refresh(): Promise<void> {
-    let identService = new Ident(this.token.refresh_token);
+    let identService = identClientFactory(this.token.refresh_token);
     let params = { grant_type: "refresh_token" };
-    return identService.createToken(params).then((token) => {
-      this.token = (token as any) as _Token;
+    return identService.createToken(params).then(token => {
+      this.token.id = token.id;
+      this.token.access_token = token.accessToken;
+      this.token.expires_in = token["expiresIn"];
+      this.token.permissions = token["permissions"];
+
+      this.initExpiresAt();
     });
+  }
+
+  // eslint-disable-next-line no-unused-vars
+  private async executeWithAccessToken<T>(action: (accessToken: string) => Promise<T>) {
+    const accessToken = await this.getToken();
+    return await action(accessToken);
   }
 }
 

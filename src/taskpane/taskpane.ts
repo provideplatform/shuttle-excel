@@ -7,9 +7,11 @@ import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 import { LoginFormData } from "./login-form-data";
+import { onError } from "./common";
+import { excelWorker } from "./excel-worker";
 
 const stubAuth = false;
-const testAfterLogin = true;
+const testAfterLogin = false;
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -29,6 +31,8 @@ function initUi() {
   $("#login-btn").on("click", login);
 
   $("#logout-btn").on("click", logout);
+
+  $('#get-workgroups-btn').on('click', fillWorkgroups);
 }
 
 function setUiForLogin() {
@@ -74,25 +78,26 @@ function login() {
 }
 
 function logout() {
-  if (identClient) {
-    identClient.logout().then(() => {
-      setUiForLogin();
-      identClient = null;
-    }, onError);
-  } else {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+    
+  identClient.logout().then(() => {
     setUiForLogin();
     identClient = null;
-  }
+  }, onError);
 }
 
-function onError(reason: any) {
-  let message = reason.toString();
-  console.log(message);
-  if (message.indexOf("Error: ") == 0) {
-    message = message.substring("Error: ".length);
+function fillWorkgroups(): Promise<unknown> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
   }
 
-  alerts.error(message);
+  return identClient.getWorkgroups().then((apps) => {
+    return excelWorker.showWorkgroups(apps);
+  }, onError);
 }
 
 function test() {
