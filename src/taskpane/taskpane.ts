@@ -8,6 +8,9 @@ import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 import { LoginFormData } from "./login-form-data";
 
+const stubAuth = false;
+const testAfterLogin = true;
+
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
@@ -17,16 +20,22 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     $(function () {
       initUi();
+      setUiForLogin();  
     });
   }
 });
 
 function initUi() {
+  $("#login-btn").on("click", login);
+
+  $("#logout-btn").on("click", logout);
+}
+
+function setUiForLogin() {
   $("#sideload-msg").hide();
   $("#login-ui").show();
   $("#work-ui").hide();
   $("#app-body").show();
-  $("#login-btn").on("click", login);
 }
 
 function setUiAfterLogin() {
@@ -47,12 +56,33 @@ function login() {
     return;
   }
 
-  authenticate(loginFormData).then((client) => {
+  const authenticateFn = stubAuth 
+    ? authenticateStub
+    : authenticate;
+
+    authenticateFn(loginFormData).then((client) => {
     identClient = client;
+    
+    loginFormData.clean();
     setUiAfterLogin();
 
-    test();
+    if (testAfterLogin) {
+      test();
+    }
+    
   }, onError);
+}
+
+function logout() {
+  if (identClient) {
+    identClient.logout().then(() => {
+      setUiForLogin();
+      identClient = null;
+    }, onError);
+  } else {
+    setUiForLogin();
+    identClient = null;
+  }
 }
 
 function onError(reason: any) {
@@ -64,7 +94,6 @@ function onError(reason: any) {
 
   alerts.error(message);
 }
-
 
 function test() {
   Excel.run((context) => {

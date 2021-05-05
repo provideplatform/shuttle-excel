@@ -49,12 +49,12 @@ class IdentClientImpl implements IdentClient {
   }
 
   logout(): Promise<void> {
-    let identService = new Ident(this.token.access_token);
-    return identService.deleteToken(this.token.id);
+    this.token = null;
+    this.user = null;
+    return Promise.resolve();
   }
 
   private initExpiresAt() {
-    debugger;
     const expires_in = this.token.expires_in;
     this.expiresAt = new Date();
     this.expiresAt.setSeconds(this.expiresAt.getSeconds() + expires_in - 60);
@@ -106,8 +106,6 @@ export function authenticate(authParams: AuthParams): Promise<IdentClient> {
   params = Object.assign(params, authParams);
   // debugger;
   return Ident.authenticate(params).then((response: AuthenticationResponse) => {
-    debugger;
-
     let token = (response.token as any) as _Token;
     let user = (response.user as any) as _User;
     return new IdentClientImpl(token, user);
