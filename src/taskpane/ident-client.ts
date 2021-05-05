@@ -1,5 +1,7 @@
 import { Ident } from "provide-js";
-import { AuthenticationResponse, Token, User, Model } from "@provide/types";
+import { AuthenticationResponse } from "@provide/types";
+import { Token as _Token } from "./models/token";
+import { User as _User } from "./models/user";
 
 export interface IdentClient {
   readonly test_expiresAt: Date;
@@ -11,12 +13,12 @@ export interface IdentClient {
 }
 
 class IdentClientImpl implements IdentClient {
-  private token: Token;
-  private user: User;
+  private token: _Token;
+  private user: _User;
 
   private expiresAt: Date;
 
-  constructor(token: Token, user: User) {
+  constructor(token: _Token, user: _User) {
     this.token = token;
     this.user = user;
 
@@ -34,89 +36,80 @@ class IdentClientImpl implements IdentClient {
   getToken(): Promise<string> {
     if (this.isExpired) {
       return this.refresh().then(() => {
-        return this.token.accessToken;
+        return this.token.access_token;
       });
     } else {
-      return Promise.resolve(this.token.accessToken);
+      return Promise.resolve(this.token.access_token);
     }
   }
 
   getUserFullName(): Promise<string> {
-    let fullName = [this.user?.firstName, this.user?.lastName].join(" ");
+    let fullName = this.user?.name ?? [this.user?.first_name, this.user?.last_name].join(" ");
     return Promise.resolve(fullName);
   }
 
   logout(): Promise<void> {
-    let identService = new Ident(this.token.accessToken);
+    let identService = new Ident(this.token.access_token);
     return identService.deleteToken(this.token.id);
   }
 
   private initExpiresAt() {
-    const expires_in = <number>this.token['expires_in'];
+    debugger;
+    const expires_in = this.token.expires_in;
     this.expiresAt = new Date();
     this.expiresAt.setSeconds(this.expiresAt.getSeconds() + expires_in - 60);
   }
 
   private refresh(): Promise<void> {
-    let identService = new Ident(this.token.refreshToken);
+    let identService = new Ident(this.token.refresh_token);
     let params = { grant_type: "refresh_token" };
     return identService.createToken(params).then((token) => {
-      this.token = token;
+      this.token = (token as any) as _Token;
     });
   }
 }
 
 export interface AuthParams {
-    email: string;
-    password: string;
+  email: string;
+  password: string;
 }
 
 export function authenticateStub(authParams: AuthParams): Promise<IdentClient> {
-  let token: Token = {
-      accessToken: 'qwertyuiop',
-      marshal() { return 'marshal'; },
-      // eslint-disable-next-line no-unused-vars
-      unmarshal(json: string) {  },
-  }
-  token['expires_in'] = 86400;
-  let user: User = {
-      firstName: 'Test'+ authParams.email,
-      lastName: 'User'+ authParams.password,
-      email: authParams.email,
-      marshal() { return 'marshal'; },
-      // eslint-disable-next-line no-unused-vars
-      unmarshal(json: string) {  }
-  }
-
-  let resp: AuthenticationResponse = {
-      token: token,
-      user: user
+  let token: _Token = {
+    id: "sdfgsdfg",
+    access_token: "qwertyuiop",
+    refresh_token: "sdfgsdfg",
+    expires_in: 86400,
+    permissions: 7553,
+    scope: "test",
   };
-  return Promise.resolve(new IdentClientImpl(resp.token, resp.user));
+  token["expires_in"] = 86400;
+  let user: _User = {
+    id: "sdfgsdfg",
+    first_name: "Test" + authParams.email,
+    last_name: "User" + authParams.password,
+    name: null,
+    email: authParams.email,
+    created_at: "2020-12-07T03:50:02.826Z",
+    privacy_policy_agreed_at: "2020-12-07T03:50:02.826Z",
+    terms_of_service_agreed_at: "2020-12-07T03:50:02.826Z",
+    permissions: 7553,
+  };
+
+  return Promise.resolve(new IdentClientImpl(token, user));
 }
 
 export function authenticate(authParams: AuthParams): Promise<IdentClient> {
   let params = {
-    scope: "offline_access"
+    scope: "offline_access",
   };
   params = Object.assign(params, authParams);
   // debugger;
-  return Ident.authenticate(params).then(
-    (response: AuthenticationResponse) => {
-      // debugger;
-      // let t = new Model();
-      // let ttt = response.token as Token;
+  return Ident.authenticate(params).then((response: AuthenticationResponse) => {
+    debugger;
 
-      // response.token.expiresAt;
-      // ttt.expiresAt;
-
-      // response.token.unmarshal(JSON.stringify(response.token));
-
-      // t.unmarshal(JSON.stringify(response.token));
-      // let realToken = t as Token;
-      // (realToken as any).issuedAt;
-      return new IdentClientImpl(response.token, response.user);
-
-    }
-  );
+    let token = (response.token as any) as _Token;
+    let user = (response.user as any) as _User;
+    return new IdentClientImpl(token, user);
+  });
 }
