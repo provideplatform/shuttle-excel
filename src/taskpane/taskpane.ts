@@ -9,9 +9,9 @@ import "../../assets/icon-80.png";
 import { LoginFormData } from "./login-form-data";
 import { onError } from "./common";
 import { excelWorker } from "./excel-worker";
+import { documentSettings, localStorageSettings, sessionStorageSettings } from "./settings/settings";
 
-const stubAuth = false;
-const testAfterLogin = false;
+const stubAuth = true;
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -22,17 +22,22 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     $(function () {
       initUi();
-      setUiForLogin();  
+      setUiForLogin();
+
+      showTestSettings();
     });
   }
 });
 
 function initUi() {
-  $("#login-btn").on("click", login);
+  $("#login-btn").on("click", onLogin);
 
-  $("#logout-btn").on("click", logout);
+  $("#logout-btn").on("click", onLogout);
 
-  $('#get-workgroups-btn').on('click', fillWorkgroups);
+  $('#get-workgroups-btn').on('click', onFillWorkgroups);
+
+  $('#set-t-settings-btn').on('click', onSetTestSettings);
+  $('#show-t-settings-btn').on('click', onShowTestSettings);
 }
 
 function setUiForLogin() {
@@ -51,7 +56,7 @@ function setUiAfterLogin() {
   });
 }
 
-function login() {
+function onLogin() {
   var $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
   const isValid = loginFormData.isValid();
@@ -69,15 +74,11 @@ function login() {
     
     loginFormData.clean();
     setUiAfterLogin();
-
-    if (testAfterLogin) {
-      test();
-    }
     
   }, onError);
 }
 
-function logout() {
+function onLogout() {
   if (!identClient) {
     setUiForLogin();
     return;
@@ -89,7 +90,7 @@ function logout() {
   }, onError);
 }
 
-function fillWorkgroups(): Promise<unknown> {
+function onFillWorkgroups(): Promise<unknown> {
   if (!identClient) {
     setUiForLogin();
     return;
@@ -100,25 +101,26 @@ function fillWorkgroups(): Promise<unknown> {
   }, onError);
 }
 
-function test() {
-  Excel.run((context) => {
-    const cursheet = context.workbook.worksheets.getActiveWorksheet();
-    const cellA1_A2 = cursheet.getRange("A1:A3");
+function onSetTestSettings() {
+  const object = { val: 'Value!' };
+  documentSettings.set("TestSettings", object);
+  localStorageSettings.set("TestSettings", object);
+  sessionStorageSettings.set("TestSettings", object);
+}
 
-    // const value = new Date(); // identClient.test_ExpiresAt();
-    const value = identClient?.test_expiresAt;
-    cellA1_A2.values = [[ value ], [ new Date() ], [ identClient?.isExpired ]];
-    cellA1_A2.format.autofitColumns();
+function onShowTestSettings() {
+  showTestSettings();
+}
 
-    return context.sync();
-  })
-  .catch(function(error) {
-    console.log("Error: " + error);
-    if (error instanceof OfficeExtension.Error) {
-      console.log("Debug info: " + JSON.stringify(error.debugInfo));
-      onError(error.message);
-    } else {
-      onError(error);
-    }
-  })
+function showTestSettings() {
+  var docSetsPromise = documentSettings.get("TestSettings");
+  var locStgSetsPromise = localStorageSettings.get("TestSettings");
+  var sessStgSetsPromise = sessionStorageSettings.get("TestSettings");
+
+  Promise.all([docSetsPromise, locStgSetsPromise, sessStgSetsPromise])
+    .then(values => {
+      const messages = values.map(x => JSON.stringify(x));
+      messages.unshift("Settings");
+      alerts.warn(messages, 50000);
+    });  
 }
