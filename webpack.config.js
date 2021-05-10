@@ -6,7 +6,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 const urlDev = "https://localhost:3000/";
-const urlProd = "https://www.contoso.com/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
+const urlProd = "https://localhost:3000/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
 
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
@@ -15,10 +15,9 @@ module.exports = async (env, options) => {
     devtool: "source-map",
     entry: {
       polyfill: ["core-js/stable", "regenerator-runtime/runtime"],
-      // identClient: "./src/taskpane/identClient.ts",
       taskpane: "./src/taskpane/taskpane.ts",
-      // taskpane: ["./src/taskpane/taskpane.ts", "./src/taskpane/identClient.ts"],
       commands: "./src/commands/commands.ts",
+      jwtInputDialog: "./src/dialogs/jwtInputDialog.ts",
     },
     resolve: {
       extensions: [".ts", ".tsx", ".html", ".js"]
@@ -74,7 +73,6 @@ module.exports = async (env, options) => {
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
         chunks: ["polyfill", "taskpane"],
-        // chunks: ["polyfill", "identClient", "taskpane" ]
       }),
       new CopyWebpackPlugin({
         patterns: [
@@ -94,6 +92,11 @@ module.exports = async (env, options) => {
           }
         }
       ]}),
+      new HtmlWebpackPlugin({
+        filename: "jwtInputDialog.html",
+        template: "./src/dialogs/jwtInputDialog.html",
+        chunks: ["polyfill", "jwtInputDialog"]
+      }),
       new HtmlWebpackPlugin({
         filename: "commands.html",
         template: "./src/commands/commands.html",

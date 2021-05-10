@@ -2,6 +2,7 @@ import { Ident, identClientFactory } from "provide-js";
 import { Application, AuthenticationResponse } from "@provide/types";
 import { Token as _Token } from "./models/token";
 import { User as _User } from "./models/user";
+import { Jwtoken } from "./common";
 
 export interface IdentClient {
   readonly test_expiresAt: Date;
@@ -12,6 +13,9 @@ export interface IdentClient {
   logout(): Promise<void>;
 
   getWorkgroups(): Promise<Application[]>;
+
+  // eslint-disable-next-line no-unused-vars
+  acceptWorkgroupInvitation(jwt: Jwtoken): Promise<void>;
 }
 
 class IdentClientImpl implements IdentClient {
@@ -62,6 +66,11 @@ class IdentClientImpl implements IdentClient {
       let identService = identClientFactory(accessToken);
       return identService.fetchApplications({});
     })
+  }
+
+  acceptWorkgroupInvitation(jwt: Jwtoken): Promise<void> {
+    console.log("JWT:", jwt);
+    return Promise.resolve();
   }
 
   private initExpiresAt() {
