@@ -1,4 +1,4 @@
-import { AuthParams } from "./ident-client";
+import { AuthParams } from "../ident-client";
 
 export class LoginFormData implements AuthParams {
   // eslint-disable-next-line no-undef
