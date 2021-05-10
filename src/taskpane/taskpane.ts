@@ -1,15 +1,17 @@
 // eslint-disable-next-line no-unused-vars
-import { IdentClient, authenticate, authenticateStub } from "./ident-client";
+import { IdentClient, authenticate, authenticateStub, restore, restoreStub } from "./ident-client";
 import { alerts } from "./alerts";
-import { LoginFormData } from "./login-form-data";
+import { LoginFormData } from "./models/login-form-data";
 import { DialogEvent, Jwtoken, onError } from "./common";
 import { excelWorker } from "./excel-worker";
-import { documentSettings, localStorageSettings, sessionStorageSettings } from "./settings/settings";
+import { settings } from "../settings/settings";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
+import { TokenStr } from "./models/common";
+import { User } from "./models/user";
 
 const stubAuth = true;
 
@@ -24,23 +26,44 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     $(function () {
       initUi();
-      setUiForLogin();
 
-      showTestSettings();
+      tryRestoreAutorization();
     });
   }
 });
+
+function tryRestoreAutorization() {
+  // debugger;
+
+  return Promise.all([settings.getRefreshToken(), settings.getUser()]).then((data) => {
+    const refreshToken = data[0] as TokenStr;
+    const user = data[1] as User;
+    if (!refreshToken || !user) {
+      setUiForLogin();
+      return;
+    }
+
+    const restoreFn = stubAuth ? restoreStub : restore;
+
+    restoreFn(refreshToken, user).then(
+      (client) => {
+        identClient = client;
+        setUiAfterLogin();
+      },
+      (reason) => {
+        settings.removeTokenAndUser();
+        setUiForLogin();
+        onError(reason);
+      }
+    );
+  });
+}
 
 function initUi() {
   $("#login-btn").on("click", onLogin);
 
   $("#logout-btn").on("click", onLogout);
-
   $("#get-workgroups-btn").on("click", onFillWorkgroups);
-
-  $("#set-t-settings-btn").on("click", onSetTestSettings);
-  $("#show-t-settings-btn").on("click", onShowTestSettings);
-
   $("#show-jwt-input-btn").on("click", onGetJwtokenDialog);
 }
 
@@ -52,12 +75,13 @@ function setUiForLogin() {
 }
 
 function setUiAfterLogin() {
+  $("#sideload-msg").hide();
   let $workUi = $("#work-ui");
-  identClient.getUserFullName().then((userFullName) => {
-    $("#user-name", $workUi).text(userFullName);
-    $("#login-ui").hide();
-    $workUi.show();
-  });
+  const userName = (identClient.user || {}).name || "unknow";
+  $("#user-name", $workUi).text(userName);
+  $("#login-ui").hide();
+  $workUi.show();
+  $("#app-body").show();
 }
 
 function onLogin() {
@@ -76,6 +100,11 @@ function onLogin() {
 
     loginFormData.clean();
     setUiAfterLogin();
+
+    const token: TokenStr = identClient.refreshToken;
+    const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
+
+    settings.setTokenAndUser(token, user);
   }, onError);
 }
 
@@ -85,10 +114,15 @@ function onLogout() {
     return;
   }
 
-  identClient.logout().then(() => {
-    setUiForLogin();
-    identClient = null;
-  }, onError);
+  identClient
+    .logout()
+    .then(() => {
+      identClient = null;
+      return settings.removeTokenAndUser();
+    }, onError)
+    .then(() => {
+      setUiForLogin();
+    }, onError);
 }
 
 function onFillWorkgroups(): Promise<unknown> {
@@ -102,35 +136,17 @@ function onFillWorkgroups(): Promise<unknown> {
   }, onError);
 }
 
-function onSetTestSettings() {
-  const object = { val: "Value!" };
-  documentSettings.set("TestSettings", object);
-  localStorageSettings.set("TestSettings", object);
-  sessionStorageSettings.set("TestSettings", object);
-}
-
-function onShowTestSettings() {
-  showTestSettings();
-}
-
-function showTestSettings() {
-  var docSetsPromise = documentSettings.get("TestSettings");
-  var locStgSetsPromise = localStorageSettings.get("TestSettings");
-  var sessStgSetsPromise = sessionStorageSettings.get("TestSettings");
-
-  Promise.all([docSetsPromise, locStgSetsPromise, sessStgSetsPromise]).then((values) => {
-    const messages = values.map((x) => JSON.stringify(x));
-    messages.unshift("Settings");
-    alerts.warn(messages);
-  });
-}
-
 function onGetJwtokenDialog() {
   getJwtokenDialog()
-    .then((jwtoken) => {
-      // alerts.success(["JWT", jwtoken]);
-      return identClient.acceptWorkgroupInvitation(jwtoken);
-    }, () => { return false; })
+    .then(
+      (jwtoken) => {
+        // alerts.success(["JWT", jwtoken]);
+        return identClient.acceptWorkgroupInvitation(jwtoken);
+      },
+      () => {
+        return false;
+      }
+    )
     .then((result) => {
       if (result !== false) {
         alerts.success("Invitation completed");
@@ -139,7 +155,7 @@ function onGetJwtokenDialog() {
 }
 
 function getJwtokenDialog(): Promise<Jwtoken> {
-  debugger;
+  // debugger;
   return new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
       JwtokenDialogUrl,
@@ -149,7 +165,7 @@ function getJwtokenDialog(): Promise<Jwtoken> {
         dialog.addEventHandler(
           Office.EventType.DialogMessageReceived,
           (args: { message?: string | boolean; error?: number }) => {
-            if (args.error) {          
+            if (args.error) {
               alerts.error(args.error + "");
               return;
             }
@@ -158,7 +174,6 @@ function getJwtokenDialog(): Promise<Jwtoken> {
             switch (dialogResult.result) {
               case DialogEvent.Initialized: {
                 // NOTE: For demo - send data to dialog - part 1
-                console.log("A3");
                 var messageToDialog = JSON.stringify({ data: "Test JWT" });
                 dialog.messageChild(messageToDialog);
                 break;

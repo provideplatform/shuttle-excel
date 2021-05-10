@@ -5,11 +5,7 @@ import { closeCanceledDialog, closeDialog, initializedDialog } from "../taskpane
 /* global Excel, OfficeExtension, Office */
 
 Office.onReady(() => {
-    console.log("P1");
-  
-
   $(function () {
-    console.log("P3");
     // NOTE: For demo - send data to dialog - part 2
     Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onMessageFromParent);
 
@@ -39,7 +35,6 @@ function isValidJwt(jwt: string): boolean | string {
 
 // NOTE: For demo - send data to dialog - part 3
 function onMessageFromParent(event) {
-    console.log("P2");
   var messageFromParent = JSON.parse(event.message);
   $("#jwt-txt").val(messageFromParent.data);
 }

@@ -1,15 +1,18 @@
 import { Ident, identClientFactory } from "provide-js";
-import { Application, AuthenticationResponse } from "@provide/types";
+import { Application } from "@provide/types";
 import { Token as _Token } from "./models/token";
-import { User as _User } from "./models/user";
+import { ServerUser as _User, User } from "./models/user";
 import { Jwtoken } from "./common";
+import { TokenStr } from "./models/common";
 
 export interface IdentClient {
   readonly test_expiresAt: Date;
+
+  readonly user: User;
   readonly isExpired: boolean;
+  readonly refreshToken: TokenStr;
 
   getToken(): Promise<string>;
-  getUserFullName(): Promise<string>;
   logout(): Promise<void>;
 
   getWorkgroups(): Promise<Application[]>;
@@ -19,14 +22,14 @@ export interface IdentClient {
 }
 
 class IdentClientImpl implements IdentClient {
-  private token: _Token;
-  private user: _User;
+  private _token: _Token;
+  private _user: User;
 
   private expiresAt: Date;
 
-  constructor(token: _Token, user: _User) {
-    this.token = token;
-    this.user = user;
+  constructor(token: _Token, user: User) {
+    this._token = token;
+    this._user = user;
 
     this.initExpiresAt();
   }
@@ -35,29 +38,32 @@ class IdentClientImpl implements IdentClient {
     return this.expiresAt;
   }
 
+  get user(): User {
+    return this._user;
+  }
+
   get isExpired(): boolean {
     // return true;
     return new Date() > this.expiresAt;
   }
 
+  get refreshToken(): TokenStr {
+    return this._token.refresh_token as TokenStr;
+  } 
+
   getToken(): Promise<string> {
     if (this.isExpired) {
       return this.refresh().then(() => {
-        return this.token.access_token;
+        return this._token.access_token;
       });
     } else {
-      return Promise.resolve(this.token.access_token);
+      return Promise.resolve(this._token.access_token);
     }
   }
 
-  getUserFullName(): Promise<string> {
-    let fullName = this.user?.name ?? [this.user?.first_name, this.user?.last_name].join(" ");
-    return Promise.resolve(fullName);
-  }
-
   logout(): Promise<void> {
-    this.token = null;
-    this.user = null;
+    this._token = null;
+    this._user = null;
     return Promise.resolve();
   }
 
@@ -74,19 +80,19 @@ class IdentClientImpl implements IdentClient {
   }
 
   private initExpiresAt() {
-    const expires_in = this.token.expires_in;
+    const expires_in = this._token.expires_in;
     this.expiresAt = new Date();
     this.expiresAt.setSeconds(this.expiresAt.getSeconds() + expires_in - 60);
   }
 
   private refresh(): Promise<void> {
-    let identService = identClientFactory(this.token.refresh_token);
+    let identService = identClientFactory(this._token.refresh_token);
     let params = { grant_type: "refresh_token" };
     return identService.createToken(params).then(token => {
-      this.token.id = token.id;
-      this.token.access_token = token.accessToken;
-      this.token.expires_in = token["expiresIn"];
-      this.token.permissions = token["permissions"];
+      this._token.id = token.id;
+      this._token.access_token = token.accessToken;
+      this._token.expires_in = token["expiresIn"];
+      this._token.permissions = token["permissions"];
 
       this.initExpiresAt();
     });
@@ -129,15 +135,27 @@ export function authenticateStub(authParams: AuthParams): Promise<IdentClient> {
   return Promise.resolve(new IdentClientImpl(token, user));
 }
 
-export function authenticate(authParams: AuthParams): Promise<IdentClient> {
+export async function authenticate(authParams: AuthParams): Promise<IdentClient> {
   let params = {
     scope: "offline_access",
   };
   params = Object.assign(params, authParams);
-  // debugger;
-  return Ident.authenticate(params).then((response: AuthenticationResponse) => {
-    let token = (response.token as any) as _Token;
-    let user = (response.user as any) as _User;
-    return new IdentClientImpl(token, user);
-  });
+  const response = await Ident.authenticate(params);
+  let token = (response.token as any) as _Token;
+  let user = (response.user as any) as _User;
+  return new IdentClientImpl(token, user);
+}
+
+// eslint-disable-next-line no-unused-vars
+export function restoreStub(refreshToken: TokenStr, user: User): Promise<IdentClient> {
+  const fakeauthParams = { email: "email", password: "password" };
+  return authenticateStub(fakeauthParams);
+}
+
+export async function restore(refreshToken: TokenStr, user: User): Promise<IdentClient> {
+  const token = { refresh_token: refreshToken, expires_in: 0 };
+  const identClient = new IdentClientImpl(token as _Token, user);
+  // NOTE: Call "getToken" to get accessToken by refreshToken.
+  await identClient.getToken();
+  return identClient;
 }
