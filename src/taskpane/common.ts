@@ -1,4 +1,4 @@
-import { alerts } from "./alerts";
+import { alerts, spinnerOff } from "./alerts";
 
 export type Jwtoken = string;
 
@@ -12,6 +12,7 @@ export function onError(reason: any) {
   }
 
   alerts.error(message);
+  spinnerOff();
 }
 
 export enum DialogEvent { 

@@ -1,6 +1,6 @@
 // eslint-disable-next-line no-unused-vars
 import { IdentClient, authenticate, authenticateStub, restore, restoreStub } from "./ident-client";
-import { alerts } from "./alerts";
+import { alerts, spinnerOff, spinnerOn } from "./alerts";
 import { LoginFormData } from "./models/login-form-data";
 import { DialogEvent, Jwtoken, onError } from "./common";
 import { excelWorker } from "./excel-worker";
@@ -34,21 +34,24 @@ Office.onReady((info) => {
 
 function tryRestoreAutorization() {
   // debugger;
+  settings.getRefreshToken();
 
   return Promise.all([settings.getRefreshToken(), settings.getUser()]).then((data) => {
     const refreshToken = data[0] as TokenStr;
     const user = data[1] as User;
     if (!refreshToken || !user) {
       setUiForLogin();
+      spinnerOff();
       return;
     }
 
     const restoreFn = stubAuth ? restoreStub : restore;
-
+    spinnerOn();
     restoreFn(refreshToken, user).then(
       (client) => {
         identClient = client;
         setUiAfterLogin();
+        spinnerOff();
       },
       (reason) => {
         settings.removeTokenAndUser();
@@ -94,7 +97,7 @@ function onLogin() {
   }
 
   const authenticateFn = stubAuth ? authenticateStub : authenticate;
-
+  spinnerOn();
   authenticateFn(loginFormData).then((client) => {
     identClient = client;
 
@@ -105,6 +108,7 @@ function onLogin() {
     const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
     settings.setTokenAndUser(token, user);
+    spinnerOff();
   }, onError);
 }
 
@@ -122,6 +126,7 @@ function onLogout() {
     }, onError)
     .then(() => {
       setUiForLogin();
+      spinnerOff();
     }, onError);
 }
 
@@ -131,27 +136,21 @@ function onFillWorkgroups(): Promise<unknown> {
     return;
   }
 
+  spinnerOn();
   return identClient.getWorkgroups().then((apps) => {
+    spinnerOff();
     return excelWorker.showWorkgroups(apps);
   }, onError);
 }
 
 function onGetJwtokenDialog() {
-  getJwtokenDialog()
-    .then(
-      (jwtoken) => {
-        // alerts.success(["JWT", jwtoken]);
-        return identClient.acceptWorkgroupInvitation(jwtoken);
-      },
-      () => {
-        return false;
-      }
-    )
-    .then((result) => {
-      if (result !== false) {
-        alerts.success("Invitation completed");
-      }
-    });
+  getJwtokenDialog().then((jwtoken) => {
+    spinnerOn();
+    return identClient.acceptWorkgroupInvitation(jwtoken).then(() => {
+      spinnerOff();
+      alerts.success("Invitation completed");
+    }, onError);
+  }, () => { });
 }
 
 function getJwtokenDialog(): Promise<Jwtoken> {
@@ -163,13 +162,7 @@ function getJwtokenDialog(): Promise<Jwtoken> {
       (result: Office.AsyncResult<Office.Dialog>) => {
         const dialog = result.value;
         dialog.addEventHandler(
-          Office.EventType.DialogMessageReceived,
-          (args: { message?: string | boolean; error?: number }) => {
-            if (args.error) {
-              alerts.error(args.error + "");
-              return;
-            }
-
+          Office.EventType.DialogMessageReceived, (args: {message: string | boolean}) => {
             const dialogResult = JSON.parse(args.message + "");
             switch (dialogResult.result) {
               case DialogEvent.Initialized: {
@@ -193,6 +186,16 @@ function getJwtokenDialog(): Promise<Jwtoken> {
             }
           }
         );
+        dialog.addEventHandler(Office.EventType.DialogEventReceived,  (args: { error: number }) => {
+          if (args.error === 12006 /*(dialog closed by user)*/) {
+            return;
+          }
+
+          if (args.error) {
+            alerts.error("Dialog error - " + (args.error + ""));
+            reject();
+          }
+        });
       }
     );
   });

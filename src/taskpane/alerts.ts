@@ -42,3 +42,11 @@ class Alerts {
 }
 
 export const alerts = new Alerts();
+
+export function spinnerOff() {
+    $('#overlay').hide();
+}
+
+export function spinnerOn() {
+    $('#overlay').show();
+}

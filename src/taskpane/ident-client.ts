@@ -124,7 +124,7 @@ export function authenticateStub(authParams: AuthParams): Promise<IdentClient> {
     id: "sdfgsdfg",
     first_name: "Test" + authParams.email,
     last_name: "User" + authParams.password,
-    name: null,
+    name: "Test" + authParams.email + " " + "User" + authParams.password,
     email: authParams.email,
     created_at: "2020-12-07T03:50:02.826Z",
     privacy_policy_agreed_at: "2020-12-07T03:50:02.826Z",

@@ -94,27 +94,26 @@ class Settings {
 
   async getRefreshToken(): Promise<TokenStr | null> {
     const value = await documentSettings.get(this.NAME);
-    return (value["refreshToken"] as TokenStr) || null;
+    return (value && value["refreshToken"] as TokenStr) || null;
   }
 
   async getUser(): Promise<User | null> {
     const value = await documentSettings.get(this.NAME);
-    return (value["user"] as User) || null;
+    return (value &&  value["user"] as User) || null;
   }
 
-  setTokenAndUser(token: TokenStr, user: User): Promise<void> {
-    const settingObj = documentSettings.get(this.NAME) || {};
+  async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
+    const settingObj = (await documentSettings.get(this.NAME)) || {};
     settingObj["refreshToken"] = token;
     settingObj["user"] = user;
-    return documentSettings.set(this.NAME, settingObj);
+    await documentSettings.set(this.NAME, settingObj);
   }
 
-  removeTokenAndUser(): Promise<void> {
-    const settingObj = documentSettings.get(this.NAME) || {};
+  async removeTokenAndUser(): Promise<void> {
+    const settingObj = (await documentSettings.get(this.NAME)) || {};
     delete settingObj["refreshToken"];
     delete settingObj["user"];
-
-    return documentSettings.set(this.NAME, settingObj);
+    await documentSettings.set(this.NAME, settingObj);
   }
 }
 
