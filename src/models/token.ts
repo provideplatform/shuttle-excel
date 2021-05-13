@@ -1,7 +1,7 @@
-import { Guid, TokenStr } from "./common";
+import { Uuid, TokenStr } from "./common";
 
 export interface Token {
-    id: Guid;
+    id: Uuid;
     expires_in: number;
     access_token: TokenStr;
     refresh_token: TokenStr;

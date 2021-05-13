@@ -1,7 +1,7 @@
 /* global Office */
 
-import { TokenStr } from "../taskpane/models/common";
-import { User } from "../taskpane/models/user";
+import { TokenStr } from "../models/common";
+import { User } from "../models/user";
 
 export interface ISettingsStorage {
   // eslint-disable-next-line no-unused-vars

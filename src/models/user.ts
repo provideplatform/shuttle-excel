@@ -1,7 +1,7 @@
-import { DateStr, Email, Guid } from "./common";
+import { DateStr, Email, Uuid } from "./common";
 
 export interface User {
-    id: Guid;
+    id: Uuid;
     name: string;
     email: Email;
 }

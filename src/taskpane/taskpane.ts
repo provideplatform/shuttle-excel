@@ -1,17 +1,18 @@
 // eslint-disable-next-line no-unused-vars
-import { IdentClient, authenticate, authenticateStub, restore, restoreStub } from "./ident-client";
-import { alerts, spinnerOff, spinnerOn } from "./alerts";
-import { LoginFormData } from "./models/login-form-data";
-import { DialogEvent, Jwtoken, onError } from "./common";
+import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
+import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
+import { LoginFormData } from "../models/login-form-data";
+import { DialogEvent, onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
 import { settings } from "../settings/settings";
+import { TokenStr } from "../models/common";
+import { User } from "../models/user";
+import { JwtInput } from "../dialogs/models/jwt-input-data";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
-import { TokenStr } from "./models/common";
-import { User } from "./models/user";
 
 const stubAuth = true;
 
@@ -20,7 +21,7 @@ const JwtokenDialogUrl = "https://localhost:3000/jwtInputDialog.html";
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
-let identClient: IdentClient | null;
+let identClient: ProvideClient | null;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
@@ -88,7 +89,7 @@ function setUiAfterLogin() {
 }
 
 function onLogin() {
-  var $form = $("#login-ui form");
+  const $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
   const isValid = loginFormData.isValid();
   if (isValid !== true) {
@@ -104,7 +105,7 @@ function onLogin() {
     loginFormData.clean();
     setUiAfterLogin();
 
-    const token: TokenStr = identClient.refreshToken;
+    const token: TokenStr = identClient.userRefreshToken;
     const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
     settings.setTokenAndUser(token, user);
@@ -144,21 +145,23 @@ function onFillWorkgroups(): Promise<unknown> {
 }
 
 function onGetJwtokenDialog() {
-  getJwtokenDialog().then((jwtoken) => {
+  getJwtokenDialog().then((jwtInput) => {
     spinnerOn();
-    return identClient.acceptWorkgroupInvitation(jwtoken).then(() => {
+    // TODO: ??????
+    // const organizationId: Uuid = "sdfgsdfgsdfg";
+    return identClient.acceptWorkgroupInvitation(jwtInput.jwt, jwtInput.orgId).then(() => {
       spinnerOff();
       alerts.success("Invitation completed");
     }, onError);
   }, () => { });
 }
 
-function getJwtokenDialog(): Promise<Jwtoken> {
+function getJwtokenDialog(): Promise<JwtInput> {
   // debugger;
   return new Promise((resolve, reject) => {
     Office.context.ui.displayDialogAsync(
       JwtokenDialogUrl,
-      { height: 37, width: 35, displayInIframe: true },
+      { height: 38, width: 35, displayInIframe: true },
       (result: Office.AsyncResult<Office.Dialog>) => {
         const dialog = result.value;
         dialog.addEventHandler(
@@ -173,8 +176,8 @@ function getJwtokenDialog(): Promise<Jwtoken> {
               }
               case DialogEvent.Ok: {
                 dialog.close();
-                const jwtoken = dialogResult.data as Jwtoken;
-                resolve(jwtoken);
+                const jwtInput = dialogResult.data as JwtInput;
+                resolve(jwtInput);
                 break;
               }
 

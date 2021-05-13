@@ -1,6 +1,5 @@
 import { alerts } from "../common/alerts";
 import { closeCanceledDialog, closeDialog, initializedDialog } from "../common/common";
-import { JwtInputData } from "./models/jwt-input-data";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -17,13 +16,20 @@ Office.onReady(() => {
 });
 
 function onOkClick() {
-  const $form = $("form");
-  const formData = new JwtInputData($form);
-  const isValid = formData.isValid();
+  const jwt = $("#jwt-txt").val() as string;
+  const isValid = isValidJwt(jwt);
   if (isValid === true) {
-    closeDialog(formData);
+    closeDialog(jwt);
   } else {
     alerts.error(<string>isValid);
+  }
+}
+
+function isValidJwt(jwt: string): boolean | string {
+  if (jwt) {
+    return true;
+  } else {
+    return "JWT is required";
   }
 }
 

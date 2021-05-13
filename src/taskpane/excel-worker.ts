@@ -1,5 +1,5 @@
 import { Application } from "@provide/types";
-import { onError } from "./common";
+import { onError } from "../common/common";
 
 /* global Excel, OfficeExtension */
 

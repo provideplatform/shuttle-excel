@@ -1,7 +1,5 @@
 import { alerts, spinnerOff } from "./alerts";
 
-export type Jwtoken = string;
-
 /* global Office */
 
 export function onError(reason: any) {
