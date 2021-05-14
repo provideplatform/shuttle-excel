@@ -1,18 +1,21 @@
 import { alerts } from "../common/alerts";
-import { closeCanceledDialog, closeDialog, initializedDialog } from "../common/common";
+import { closeCanceledDialog, closeSuccessDialog, getDialogData } from "./dialogs";
 import { JwtInputData } from "./models/jwt-input-data";
+
+export const JwtInputDialogUrl = "https://localhost:3000/jwtInputDialog.html";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
 Office.onReady(() => {
   $(function () {
-    // NOTE: For demo - send data to dialog - part 2
-    Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onMessageFromParent);
-
     $("#ok-btn").on("click", onOkClick);
-    $("#close-btn").on("click", closeCanceledDialog);
-    initializedDialog();
+    $("#close-btn").on("click", onCancelClick);
+
+    const data = getDialogData(JwtInputDialogUrl);
+    if (data && data.data) {
+      $("#jwt-txt").val(data.data);
+    }
   });
 });
 
@@ -21,14 +24,13 @@ function onOkClick() {
   const formData = new JwtInputData($form);
   const isValid = formData.isValid();
   if (isValid === true) {
-    closeDialog(formData);
+    closeSuccessDialog(formData);
+    formData.clean();
   } else {
     alerts.error(<string>isValid);
   }
 }
 
-// NOTE: For demo - send data to dialog - part 3
-function onMessageFromParent(event) {
-  var messageFromParent = JSON.parse(event.message);
-  $("#jwt-txt").val(messageFromParent.data);
+function onCancelClick() {
+  closeCanceledDialog();
 }

@@ -1,6 +1,6 @@
 import { Application, Contract, Organization, Key, Wallet, Vault as ProvideVault } from "@provide/types";
 import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory } from "provide-js";
-import { Uuid, Jwtoken, TokenStr } from "../models/common";
+import { Uuid, TokenStr } from "../models/common";
 import { AuthParams } from "../models/auth-params";
 import * as jwt from "jsonwebtoken";
 import { AuthContext } from "./auth-context";
@@ -18,7 +18,7 @@ export interface ProvideClient {
   getWorkgroups(): Promise<Application[]>;
 
   // eslint-disable-next-line no-unused-vars
-  acceptWorkgroupInvitation(inviteToken: Jwtoken, organizationId: Uuid): Promise<void>;
+  acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -232,7 +232,7 @@ class ProvideClientImpl implements ProvideClient {
     return retVal;
   }
 
-  async acceptWorkgroupInvitation(inviteToken: Jwtoken, organizationId: Uuid): Promise<void> {
+  async acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void> {
     // TODO: requirePublicJWTVerifiers() from GO
 
     const inviteClaims = jwt.decode(inviteToken) as { [key: string]: any };

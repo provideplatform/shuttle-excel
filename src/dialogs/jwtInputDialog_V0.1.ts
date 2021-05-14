@@ -1,17 +1,20 @@
 import { alerts } from "../common/alerts";
-import { closeCanceledDialog, closeDialog, initializedDialog } from "../common/common";
+import { closeCanceledDialog, closeSuccessDialog, getDialogData } from "./dialogs";
+
+export const JwtInputDialogV01Url = "https://localhost:3000/jwtInputDialog_V0.1.html";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
 Office.onReady(() => {
   $(function () {
-    // NOTE: For demo - send data to dialog - part 2
-    Office.context.ui.addHandlerAsync(Office.EventType.DialogParentMessageReceived, onMessageFromParent);
-
     $("#ok-btn").on("click", onOkClick);
-    $("#close-btn").on("click", closeCanceledDialog);
-    initializedDialog();
+    $("#close-btn").on("click", onCancelClick);
+
+    const data = getDialogData(JwtInputDialogV01Url);
+    if (data && data.data) {
+      $("#jwt-txt").val(data.data);
+    }
   });
 });
 
@@ -19,10 +22,14 @@ function onOkClick() {
   const jwt = $("#jwt-txt").val() as string;
   const isValid = isValidJwt(jwt);
   if (isValid === true) {
-    closeDialog(jwt);
+    closeSuccessDialog(jwt);
   } else {
     alerts.error(<string>isValid);
   }
+}
+
+function onCancelClick() {
+  closeCanceledDialog();
 }
 
 function isValidJwt(jwt: string): boolean | string {
@@ -31,10 +38,4 @@ function isValidJwt(jwt: string): boolean | string {
   } else {
     return "JWT is required";
   }
-}
-
-// NOTE: For demo - send data to dialog - part 3
-function onMessageFromParent(event) {
-  var messageFromParent = JSON.parse(event.message);
-  $("#jwt-txt").val(messageFromParent.data);
 }

@@ -2,12 +2,12 @@
 import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
 import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
-import { DialogEvent, onError } from "../common/common";
+import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
 import { settings } from "../settings/settings";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
-import { JwtInput } from "../dialogs/models/jwt-input-data";
+import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
@@ -15,8 +15,6 @@ import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
 
 const stubAuth = true;
-
-const JwtokenDialogUrl = "https://localhost:3000/jwtInputDialog.html";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -145,7 +143,9 @@ function onFillWorkgroups(): Promise<unknown> {
 }
 
 function onGetJwtokenDialog() {
-  getJwtokenDialog().then((jwtInput) => {
+  // showJwtInputDialog()
+  // NOTE: For demo - send data to dialog - part 1
+  showJwtInputDialog({ data: "Test JWT" }).then((jwtInput) => {
     spinnerOn();
     // TODO: ??????
     // const organizationId: Uuid = "sdfgsdfgsdfg";
@@ -153,53 +153,5 @@ function onGetJwtokenDialog() {
       spinnerOff();
       alerts.success("Invitation completed");
     }, onError);
-  }, () => { });
-}
-
-function getJwtokenDialog(): Promise<JwtInput> {
-  // debugger;
-  return new Promise((resolve, reject) => {
-    Office.context.ui.displayDialogAsync(
-      JwtokenDialogUrl,
-      { height: 38, width: 35, displayInIframe: true },
-      (result: Office.AsyncResult<Office.Dialog>) => {
-        const dialog = result.value;
-        dialog.addEventHandler(
-          Office.EventType.DialogMessageReceived, (args: {message: string | boolean}) => {
-            const dialogResult = JSON.parse(args.message + "");
-            switch (dialogResult.result) {
-              case DialogEvent.Initialized: {
-                // NOTE: For demo - send data to dialog - part 1
-                var messageToDialog = JSON.stringify({ data: "Test JWT" });
-                dialog.messageChild(messageToDialog);
-                break;
-              }
-              case DialogEvent.Ok: {
-                dialog.close();
-                const jwtInput = dialogResult.data as JwtInput;
-                resolve(jwtInput);
-                break;
-              }
-
-              case DialogEvent.Cancel: {
-                dialog.close();
-                reject();
-                break;
-              }
-            }
-          }
-        );
-        dialog.addEventHandler(Office.EventType.DialogEventReceived,  (args: { error: number }) => {
-          if (args.error === 12006 /*(dialog closed by user)*/) {
-            return;
-          }
-
-          if (args.error) {
-            alerts.error("Dialog error - " + (args.error + ""));
-            reject();
-          }
-        });
-      }
-    );
-  });
+  }, () => { /* NOTE: On cancel - do nothing */ });
 }

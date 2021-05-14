@@ -1,19 +1,17 @@
-import { Uuid, Jwtoken } from "../../models/common";
+import { Uuid, TokenStr } from "../../models/common";
 import * as jwt from "jsonwebtoken";
 import * as validate from "uuid-validate";
 
-export interface JwtInput {
+export interface JwtInputResult {
   orgId: Uuid;
-  jwt: Jwtoken;
+  jwt: TokenStr;
 }
 
-export class JwtInputData implements JwtInput {
+export class JwtInputData implements JwtInputResult {
   // eslint-disable-next-line no-undef
   private $form: JQuery;
   public orgId: Uuid;
-  public jwt: Jwtoken;
-
-  private validators = [this.isOrgIdValid, this.isJwtValid];
+  public jwt: TokenStr;
 
   // eslint-disable-next-line no-undef
   constructor($form: JQuery) {
