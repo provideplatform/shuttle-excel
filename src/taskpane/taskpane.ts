@@ -1,4 +1,3 @@
-// eslint-disable-next-line no-unused-vars
 import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
 import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";

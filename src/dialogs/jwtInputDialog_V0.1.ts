@@ -1,7 +1,6 @@
 import { alerts } from "../common/alerts";
 import { closeCanceledDialog, closeSuccessDialog, getDialogData } from "./dialogs";
-
-export const JwtInputDialogV01Url = "https://localhost:3000/jwtInputDialog_V0.1.html";
+import { JwtInputDialogV01Url } from "./dialogs-helpers";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */

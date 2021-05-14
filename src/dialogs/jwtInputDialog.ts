@@ -1,22 +1,23 @@
 import { alerts } from "../common/alerts";
 import { closeCanceledDialog, closeSuccessDialog, getDialogData } from "./dialogs";
+import { JwtInputDialogUrl } from "./dialogs-helpers";
 import { JwtInputData } from "./models/jwt-input-data";
-
-export const JwtInputDialogUrl = "https://localhost:3000/jwtInputDialog.html";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
-Office.onReady(() => {
-  $(function () {
-    $("#ok-btn").on("click", onOkClick);
-    $("#close-btn").on("click", onCancelClick);
+Office.onReady((info) => {
+  if (info.host === Office.HostType.Excel) {
+    $(function () {
+      $("#ok-btn").on("click", onOkClick);
+      $("#close-btn").on("click", onCancelClick);
 
-    const data = getDialogData(JwtInputDialogUrl);
-    if (data && data.data) {
-      $("#jwt-txt").val(data.data);
-    }
-  });
+      const data = getDialogData(JwtInputDialogUrl);
+      if (data && data.data) {
+        $("#jwt-txt").val(data.data);
+      }
+    });
+  }
 });
 
 function onOkClick() {

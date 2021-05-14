@@ -19,7 +19,8 @@ body {
   opacity: 0.8;
 }
 
-.alert {
+.alerts-container {
+  position: fixed;
   bottom: 5px;
   left: 2%;
   width: 96%;

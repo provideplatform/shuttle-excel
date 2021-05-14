@@ -1,7 +1,8 @@
 class Alerts {
     private delay = 2000;
-    private alertContainer = `
-    <div class="alert  position-fixed">
+    private alertsContainerHtml = '<div class="position-fixed"></div>';
+    private alertHtml = `
+    <div class="alert">
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
     </div>`;
 
@@ -22,7 +23,7 @@ class Alerts {
 
     // eslint-disable-next-line no-undef
     private build(type: string, message: string | string[], alerClass: string, delay?: number): JQuery<HTMLElement> {
-        const alert = $(this.alertContainer);
+        const alert = $(this.alertHtml);
         alert.append('<strong>'+ type +': </strong>');
 
         if (Array.isArray(message)) {
@@ -35,9 +36,20 @@ class Alerts {
         }
 
         alert.addClass(alerClass)
-            .appendTo($('body'));
+            .appendTo(this.getAlertsContainer());
         setTimeout(() => { (<any>alert).alert('close') }, delay ?? this.delay);
         return alert;
+    }
+
+    // eslint-disable-next-line no-undef
+    private getAlertsContainer(): JQuery<HTMLElement> {
+        const containerClass = "alerts-container";
+        const retVal = $("." + containerClass + ":first");
+        if (retVal.length) {
+            return retVal;
+        }
+
+        return $(this.alertsContainerHtml).addClass(containerClass).appendTo($("body"));
     }
 }
 
