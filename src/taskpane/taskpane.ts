@@ -7,13 +7,22 @@ import { settings } from "../settings/settings";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
+import * as $ from "jquery";
 
 // images references in the manifest
 import "../../assets/icon-16.png";
 import "../../assets/icon-32.png";
 import "../../assets/icon-80.png";
+import "../../assets/logo-filled.png";
 
-const stubAuth = true;
+import "bootstrap/dist/css/bootstrap.min.css";
+import '@fortawesome/fontawesome-free/js/fontawesome';
+import '@fortawesome/fontawesome-free/js/solid';
+import '@fortawesome/fontawesome-free/js/regular';
+import '@fortawesome/fontawesome-free/js/brands';
+import "./taskpane.css";
+
+const stubAuth = false;
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */

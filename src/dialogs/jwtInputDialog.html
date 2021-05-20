@@ -4,56 +4,25 @@
     <title>JWT input</title>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- jQuery -->
-    <!-- <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.js"></script> -->
-    <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.6.0.min.js"></script>
-
+    
     <!-- Office JavaScript API -->
     <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
-
-    <!-- Bootstrap CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css"
-      integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l"
-      crossorigin="anonymous"
-    />
-    <!-- font-awesome -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
-      integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w=="
-      crossorigin="anonymous"
-    />
-
-    <!-- Bootstrap JS -->
-    <!-- <script 
-      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" 
-      integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" 
-      crossorigin="anonymous"></script> -->
-    <script
-      src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
-      integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
-      crossorigin="anonymous"
-    ></script>
-
-    <!-- Template styles -->
-    <link href="taskpane.css" rel="stylesheet" type="text/css" />
   </head>
   <body class="bg-dark text-light w-100 h-100">
-    <div class="card h-100 bg-transparent" style="min-height: 18rem; min-width: 15rem;">
-      <!-- <div class="card-header border-0 bg-transparent d-flex justify-content-center"></div> -->
-
+    <div
+      id="jwt-input-dialog"
+      class="card h-100 bg-transparent"
+      style="min-height: 18rem; min-width: 15rem; display: none"
+    >
       <div class="card-body border-0 bg-transparent">
         <form>
           <div class="form-group">
             <label for="org-id-txt" class="text">Organization Id</label>
-            <input class="form-control" id="org-id-txt">
+            <input class="form-control" id="org-id-txt" />
           </div>
           <div class="form-group">
             <label for="jwt-txt" class="text">JWT</label>
-            <textarea class="form-control" id="jwt-txt" rows="3" style="resize: none;"></textarea>
+            <textarea class="form-control" id="jwt-txt" rows="3" style="resize: none"></textarea>
           </div>
         </form>
       </div>

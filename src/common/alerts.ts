@@ -1,3 +1,6 @@
+import * as $ from "jquery";
+import "bootstrap";
+
 class Alerts {
     private delay = 2000;
     private alertsContainerHtml = '<div class="position-fixed"></div>';
@@ -6,22 +9,18 @@ class Alerts {
         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
     </div>`;
 
-    // eslint-disable-next-line no-undef
     error(message: string | string[], delay?: number): JQuery<HTMLElement> {
         return this.build('Error', message, 'alert-danger', delay);
     }
 
-    // eslint-disable-next-line no-undef
     success(message: string | string[], delay?: number): JQuery<HTMLElement> {
         return this.build('OK', message, 'alert-success', delay);
     }
 
-    // eslint-disable-next-line no-undef
     warn(message: string | string[], delay?: number): JQuery<HTMLElement> {
         return this.build('WARN', message, 'alert-warning', delay);
     }
 
-    // eslint-disable-next-line no-undef
     private build(type: string, message: string | string[], alerClass: string, delay?: number): JQuery<HTMLElement> {
         const alert = $(this.alertHtml);
         alert.append('<strong>'+ type +': </strong>');
@@ -41,7 +40,6 @@ class Alerts {
         return alert;
     }
 
-    // eslint-disable-next-line no-undef
     private getAlertsContainer(): JQuery<HTMLElement> {
         const containerClass = "alerts-container";
         const retVal = $("." + containerClass + ":first");

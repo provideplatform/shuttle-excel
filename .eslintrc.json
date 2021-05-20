@@ -3,7 +3,7 @@
     "browser": true,
     "commonjs": true,
     "es6": true,
-    "jquery": true
+    // "jquery": true
   },
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],

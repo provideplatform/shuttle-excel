@@ -20,10 +20,14 @@ module.exports = async (env, options) => {
       jwtInputDialog: "./src/dialogs/jwtInputDialog.ts",
     },
     resolve: {
-      extensions: [".ts", ".tsx", ".html", ".js"]
+      extensions: [".css", ".ts", ".tsx", ".html", ".js"]
     },
     module: {
       rules: [
+        {
+          test: /\.css$/i,
+          use: ["style-loader", "css-loader"],
+        },
         {
             test: /\.m?js$/,
             exclude: [
@@ -76,10 +80,11 @@ module.exports = async (env, options) => {
       }),
       new CopyWebpackPlugin({
         patterns: [
-        {
-          to: "taskpane.css",
-          from: "./src/taskpane/taskpane.css"
-        },
+        // NOTE: Don't need because use import "./taskpane.css" in taskpane.ts and ...
+        // {
+        //   to: "taskpane.css",
+        //   from: "./src/taskpane/taskpane.css"
+        // },
         {
           to: "[name]." + buildType + ".[ext]",
           from: "manifest*.xml",

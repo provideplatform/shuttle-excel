@@ -2,6 +2,10 @@ import { alerts } from "../common/alerts";
 import { closeCanceledDialog, closeSuccessDialog, getDialogData } from "./dialogs";
 import { JwtInputDialogUrl } from "./dialogs-helpers";
 import { JwtInputData } from "./models/jwt-input-data";
+import * as $ from "jquery";
+
+import "bootstrap/dist/css/bootstrap.min.css";
+import "../taskpane/taskpane.css";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -16,6 +20,8 @@ Office.onReady((info) => {
       if (data && data.data) {
         $("#jwt-txt").val(data.data);
       }
+
+      $("#jwt-input-dialog").show();
     });
   }
 });
