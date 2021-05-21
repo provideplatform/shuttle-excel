@@ -16,10 +16,10 @@ import "../../assets/icon-80.png";
 import "../../assets/logo-filled.png";
 
 import "bootstrap/dist/css/bootstrap.min.css";
-import '@fortawesome/fontawesome-free/js/fontawesome';
-import '@fortawesome/fontawesome-free/js/solid';
-import '@fortawesome/fontawesome-free/js/regular';
-import '@fortawesome/fontawesome-free/js/brands';
+import "@fortawesome/fontawesome-free/js/fontawesome";
+import "@fortawesome/fontawesome-free/js/solid";
+import "@fortawesome/fontawesome-free/js/regular";
+import "@fortawesome/fontawesome-free/js/brands";
 import "./taskpane.css";
 
 const stubAuth = false;
@@ -34,7 +34,7 @@ Office.onReady((info) => {
     $(function () {
       initUi();
 
-      tryRestoreAutorization();
+      tryRestoreAutorization().then(fillMyWorkgroupSheet);
     });
   }
 });
@@ -54,7 +54,7 @@ function tryRestoreAutorization() {
 
     const restoreFn = stubAuth ? restoreStub : restore;
     spinnerOn();
-    restoreFn(refreshToken, user).then(
+    return restoreFn(refreshToken, user).then(
       (client) => {
         identClient = client;
         setUiAfterLogin();
@@ -94,7 +94,7 @@ function setUiAfterLogin() {
   $("#app-body").show();
 }
 
-function onLogin() {
+function onLogin(): Promise<void> {
   const $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
   const isValid = loginFormData.isValid();
@@ -105,18 +105,19 @@ function onLogin() {
 
   const authenticateFn = stubAuth ? authenticateStub : authenticate;
   spinnerOn();
-  authenticateFn(loginFormData).then((client) => {
-    identClient = client;
+  return authenticateFn(loginFormData)
+    .then((client) => {
+      identClient = client;
 
-    loginFormData.clean();
-    setUiAfterLogin();
+      loginFormData.clean();
+      setUiAfterLogin();
 
-    const token: TokenStr = identClient.userRefreshToken;
-    const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
+      const token: TokenStr = identClient.userRefreshToken;
+      const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
-    settings.setTokenAndUser(token, user);
-    spinnerOff();
-  }, onError);
+      return settings.setTokenAndUser(token, user).then(spinnerOff);
+    }, onError)
+    .then(fillMyWorkgroupSheet);
 }
 
 function onLogout() {
@@ -138,6 +139,29 @@ function onLogout() {
 }
 
 function onFillWorkgroups(): Promise<unknown> {
+  return fillMyWorkgroupSheet();
+}
+
+function onGetJwtokenDialog() {
+  // showJwtInputDialog()
+  // NOTE: For demo - send data to dialog - part 1
+  showJwtInputDialog({ data: "Test JWT" }).then(
+    (jwtInput) => {
+      spinnerOn();
+      // TODO: ??????
+      // const organizationId: Uuid = "sdfgsdfgsdfg";
+      return identClient.acceptWorkgroupInvitation(jwtInput.jwt, jwtInput.orgId).then(() => {
+        spinnerOff();
+        alerts.success("Invitation completed");
+      }, onError);
+    },
+    () => {
+      /* NOTE: On cancel - do nothing */
+    }
+  );
+}
+
+function fillMyWorkgroupSheet(): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
@@ -145,21 +169,6 @@ function onFillWorkgroups(): Promise<unknown> {
 
   spinnerOn();
   return identClient.getWorkgroups().then((apps) => {
-    spinnerOff();
-    return excelWorker.showWorkgroups(apps);
+    return excelWorker.showWorkgroups("My Workgroups", apps, true).then(spinnerOff);
   }, onError);
-}
-
-function onGetJwtokenDialog() {
-  // showJwtInputDialog()
-  // NOTE: For demo - send data to dialog - part 1
-  showJwtInputDialog({ data: "Test JWT" }).then((jwtInput) => {
-    spinnerOn();
-    // TODO: ??????
-    // const organizationId: Uuid = "sdfgsdfgsdfg";
-    return identClient.acceptWorkgroupInvitation(jwtInput.jwt, jwtInput.orgId).then(() => {
-      spinnerOff();
-      alerts.success("Invitation completed");
-    }, onError);
-  }, () => { /* NOTE: On cancel - do nothing */ });
 }

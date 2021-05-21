@@ -4,26 +4,35 @@ import { onError } from "../common/common";
 /* global Excel, OfficeExtension */
 
 export class ExcelWorker {
-  async showWorkgroups(applications: Application[]): Promise<unknown> {
-    try {
-      Excel.run((context: Excel.RequestContext) => {
-        this.renderWorkgroups(context, applications);
+  showWorkgroups(sheetName: string, applications: Application[], active: boolean = false): Promise<unknown> {
+    return Excel.run((context: Excel.RequestContext) => {
+      var sheets = context.workbook.worksheets;
+      sheets.load("items/name");
+
+      return context.sync().then(() => {
+        let sheet: Excel.Worksheet = sheets.items.find((x) => x.name === sheetName);
+        if (!sheet) {
+          sheet = sheets.add(sheetName);
+        }
+
+        this.renderWorkgroups(sheet, applications);
+
+        if (active) {
+          sheet.activate();
+        }
+
         return context.sync();
       });
-    } catch (error) {
-      return this.catchError(error);
-    }
+    }).catch(this.catchError);
   }
 
-  private renderWorkgroups(context: Excel.RequestContext, applications: Application[]): void {
-    const currentWorksheet: Excel.Worksheet = context.workbook.worksheets.getActiveWorksheet();
-
-    let workgroupsTable: Excel.Table = currentWorksheet.tables.getItemOrNullObject("Workgroups");
+  private renderWorkgroups(sheet: Excel.Worksheet, applications: Application[]): void {
+    let workgroupsTable: Excel.Table = sheet.tables.getItemOrNullObject("Workgroups");
     if (workgroupsTable) {
       workgroupsTable.delete();
     }
 
-    workgroupsTable = currentWorksheet.tables.add("A1:F1", true /* hasHeaders */);
+    workgroupsTable = sheet.tables.add("A1:F1", true /* hasHeaders */);
     workgroupsTable.name = "Workgroups";
 
     workgroupsTable.getHeaderRowRange().values = [["NetworkId", "UserId", "Name", "Description", "Type", "Hidden"]];
@@ -49,7 +58,6 @@ export class ExcelWorker {
 }
 
 export const excelWorker = new ExcelWorker();
-
 
 // function test() {
 //   Excel.run((context) => {
