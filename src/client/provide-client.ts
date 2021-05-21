@@ -11,7 +11,7 @@ import { ServerUser as _User, User } from "../models/user";
 
 export interface ProvideClient {
   readonly user: User;
-  readonly userRefreshToken: TokenStr
+  readonly userRefreshToken: TokenStr;
 
   logout(): Promise<void>;
 
@@ -206,6 +206,30 @@ class ProvideClientImpl implements ProvideClient {
     return applicationOrganization;
   }
 
+  async createOrGetApplicationOrganization(
+    workgroupAndApplicationId: Uuid,
+    organizationId: Uuid
+  ): Promise<Organization> {
+    try {
+      const applicationOrganization = await this.createApplicationOrganization(
+        workgroupAndApplicationId,
+        organizationId
+      );
+      return applicationOrganization;
+    } catch {
+      const applicationOrganizations = await this.getApplicationOrganizations(
+        workgroupAndApplicationId,
+        organizationId
+      );
+      let applicationOrganization = applicationOrganizations.find((x) => x.id === organizationId);
+      if (applicationOrganization) {
+        return applicationOrganization;
+      }
+
+      throw "Organization not associated with workgroup";
+    }
+  }
+
   async createApplicationOrganization(workgroupAndApplicationId: Uuid, organizationId: Uuid): Promise<Organization> {
     this.guardNotNullAppAuthContext();
 
@@ -233,6 +257,8 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void> {
+    debugger;
+
     // TODO: requirePublicJWTVerifiers() from GO
 
     const inviteClaims = jwt.decode(inviteToken) as { [key: string]: any };
@@ -267,7 +293,11 @@ class ProvideClientImpl implements ProvideClient {
 
     // NOTE: It's look like instance of applicationOrganization not required
     // eslint-disable-next-line no-unused-vars
-    const applicationOrganization = await this.getOrCreateApplicationOrganization(
+    // const applicationOrganization = await this.getOrCreateApplicationOrganization(
+    //   workgroupAndApplicationId,
+    //   organizationId
+    // );
+    const applicationOrganization = await this.createOrGetApplicationOrganization(
       workgroupAndApplicationId,
       organizationId
     );
