@@ -295,6 +295,7 @@ class ProvideClientImpl implements ProvideClient {
     //   workgroupAndApplicationId,
     //   organizationId
     // );
+    // eslint-disable-next-line no-unused-vars
     const applicationOrganization = await this.createOrGetApplicationOrganization(
       workgroupAndApplicationId,
       organizationId
