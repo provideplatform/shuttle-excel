@@ -40,12 +40,7 @@ Office.onReady((info) => {
 });
 
 function tryRestoreAutorization() {
-  // debugger;
-  settings.getRefreshToken();
-
-  return Promise.all([settings.getRefreshToken(), settings.getUser()]).then((data) => {
-    const refreshToken = data[0] as TokenStr;
-    const user = data[1] as User;
+  return Promise.all([settings.getRefreshToken(), settings.getUser()]).then(([refreshToken, user]) => {
     if (!refreshToken || !user) {
       setUiForLogin();
       spinnerOff();
@@ -143,13 +138,11 @@ function onFillWorkgroups(): Promise<unknown> {
 }
 
 function onGetJwtokenDialog() {
-  // showJwtInputDialog()
-  // NOTE: For demo - send data to dialog - part 1
-  showJwtInputDialog({ data: "Test JWT" }).then(
+  showJwtInputDialog().then(
+    // NOTE: For demo - send data to dialog - part 1
+    // showJwtInputDialog({ data: "Test JWT" }).then(
     (jwtInput) => {
       spinnerOn();
-      // TODO: ??????
-      // const organizationId: Uuid = "sdfgsdfgsdfg";
       return identClient.acceptWorkgroupInvitation(jwtInput.jwt, jwtInput.orgId).then(() => {
         spinnerOff();
         alerts.success("Invitation completed");

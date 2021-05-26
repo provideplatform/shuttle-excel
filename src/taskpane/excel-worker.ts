@@ -1,3 +1,5 @@
+// NOTE: Logic of working with Excel
+
 import { Application } from "@provide/types";
 import { onError } from "../common/common";
 

@@ -257,8 +257,6 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void> {
-    debugger;
-
     // TODO: requirePublicJWTVerifiers() from GO
 
     const inviteClaims = jwt.decode(inviteToken) as { [key: string]: any };

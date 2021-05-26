@@ -1,3 +1,5 @@
+// NOTE: Common functions and structs of dialogs
+
 import { alerts } from "../common/alerts";
 
 /* global Office */

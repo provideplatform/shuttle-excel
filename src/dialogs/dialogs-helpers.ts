@@ -1,17 +1,24 @@
 // NOTE: The wrapper functions of opening dialog for decrease "complexity" of opening :-)
 
-import { TokenStr } from "../models/common";
 import { showDialog } from "./dialogs";
 import { JwtInputResult } from "./models/jwt-input-data";
 
-export const JwtInputDialogUrl = "https://localhost:3000/jwtInputDialog.html";
-// NOTE: data - for demo only!
-export function showJwtInputDialog(data: any): Promise<JwtInputResult> {
-    return showDialog<JwtInputResult>(JwtInputDialogUrl, { height: 38, width: 35 }, data);
+export const JwtInputDialogUrl = "jwtInputDialog.html";
+export function showJwtInputDialog(data?: any): Promise<JwtInputResult> {
+  const url = getDialogUrl(JwtInputDialogUrl);
+  return showDialog<JwtInputResult>(url, { height: 38, width: 35 }, data);
 }
 
-export const JwtInputDialogV01Url = "https://localhost:3000/jwtInputDialog_V0.1.html";
-// NOTE: Demo function
-export function showJwtInputDialoV01(data: any): Promise<TokenStr> {
-    return showDialog<TokenStr>(JwtInputDialogV01Url, { height: 38, width: 35 }, data);
+function getDialogUrl(dialogPage: string): string {
+    const currentPage = getCurrentPage();
+    const url = window.location.href.replace(currentPage, dialogPage);
+    return removeSearchPart(url);
+}
+
+function removeSearchPart(url: string) {
+    return url.substr(0, url.length - window.location.search.length);
+}
+
+function getCurrentPage(): string {
+    return window.location.pathname.substr(window.location.pathname.lastIndexOf("/") + 1);
 }

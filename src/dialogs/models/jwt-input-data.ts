@@ -1,3 +1,5 @@
+//NOTE: Structs for jwtInputDialog
+
 import { Uuid, TokenStr } from "../../models/common";
 import * as jwt from "jsonwebtoken";
 import * as validate from "uuid-validate";

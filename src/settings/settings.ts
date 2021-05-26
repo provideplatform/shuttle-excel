@@ -1,3 +1,5 @@
+// NOTE: Incapsulate working with storages
+
 /* global Office */
 
 import { TokenStr } from "../models/common";
