@@ -2,6 +2,8 @@
 
 import { Application } from "@provide/types";
 import { onError } from "../common/common";
+import { baseline } from "../baseline/index";
+import { ProvideClient } from "src/client/provide-client";
 
 /* global Excel, OfficeExtension */
 
@@ -46,6 +48,14 @@ export class ExcelWorker {
     // expensesTable.columns.getItemAt(3).getRange().numberFormat = [['\u20AC#,##0.00']];
     workgroupsTable.getRange().format.autofitColumns();
     workgroupsTable.getRange().format.autofitRows();
+  }
+
+  createInitialSetup(): Promise<unknown> {
+    return baseline.createListeners();
+  }
+
+  startBaselineService(identClient: ProvideClient): Promise<void> {
+    return baseline.setBaselineServiceClient(identClient);
   }
 
   private catchError(error: any): void {

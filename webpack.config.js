@@ -18,6 +18,7 @@ module.exports = async (env, options) => {
       taskpane: "./src/taskpane/taskpane.ts",
       commands: "./src/commands/commands.ts",
       jwtInputDialog: "./src/dialogs/jwtInputDialog.ts",
+      primaryKeyDialog: "./src/dialogs/primaryKeyDialog.ts",
     },
     resolve: {
       extensions: [".css", ".ts", ".tsx", ".html", ".js"]
@@ -101,6 +102,11 @@ module.exports = async (env, options) => {
         filename: "jwtInputDialog.html",
         template: "./src/dialogs/jwtInputDialog.html",
         chunks: ["polyfill", "jwtInputDialog"]
+      }),
+      new HtmlWebpackPlugin({
+        filename: "primaryKeyDialog.html",
+        template: "./src/dialogs/primaryKeyDialog.html",
+        chunks: ["polyfill", "primaryKeyDialog"]
       }),
       new HtmlWebpackPlugin({
         filename: "commands.html",

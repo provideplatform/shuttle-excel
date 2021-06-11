@@ -85,3 +85,49 @@ export function showDialog<TOutputData>(url: string, opts: DialogOptions, data?:
     });
   });
 }
+
+
+export function showPKDialog<TOutputData>(url: string, opts: DialogOptions, data?: any): Promise<TOutputData> {
+  const dialogOpts = Object.assign(
+    {
+      displayInIframe: true,
+    },
+    opts
+  );
+
+  // NOTE: Use localStorage to transfer data to dialog (messageChild doesn't work in desktop Excel)
+  localStorage.setItem(url, JSON.stringify(data));
+
+  return new Promise((resolve, reject) => {
+    Office.context.ui.displayDialogAsync(url, dialogOpts, (result: Office.AsyncResult<Office.Dialog>) => {
+      const dialog = result.value;
+      dialog.addEventHandler(Office.EventType.DialogMessageReceived, (args: { message: string | boolean }) => {
+        const dialogResult = JSON.parse(args.message + "");
+        switch (dialogResult.result) {
+          case DialogEvent.Ok: {
+            dialog.close();
+            const primaryKeyInput = dialogResult.data as TOutputData;
+            resolve(primaryKeyInput);
+            break;
+          }
+
+          case DialogEvent.Cancel: {
+            dialog.close();
+            reject();
+            break;
+          }
+        }
+      });
+      dialog.addEventHandler(Office.EventType.DialogEventReceived, (args: { error: number }) => {
+        if (args.error === 12006 /*(dialog closed by user)*/) {
+          return;
+        }
+
+        if (args.error) {
+          alerts.error("Dialog error - " + (args.error + ""));
+          reject();
+        }
+      });
+    });
+  });
+}

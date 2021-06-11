@@ -34,7 +34,7 @@ Office.onReady((info) => {
     $(function () {
       initUi();
 
-      tryRestoreAutorization().then(fillMyWorkgroupSheet);
+      tryRestoreAutorization().then(fillMyWorkgroupSheet).then(startBaselining);
     });
   }
 });
@@ -70,6 +70,7 @@ function initUi() {
   $("#logout-btn").on("click", onLogout);
   $("#get-workgroups-btn").on("click", onFillWorkgroups);
   $("#show-jwt-input-btn").on("click", onGetJwtokenDialog);
+  $("#start-baselining-btn").on("click", onSetupBaselining);
 }
 
 function setUiForLogin() {
@@ -112,7 +113,8 @@ function onLogin(): Promise<void> {
 
       return settings.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
-    .then(fillMyWorkgroupSheet);
+    .then(fillMyWorkgroupSheet)
+    .then(startBaselining);
 }
 
 function onLogout() {
@@ -164,4 +166,26 @@ function fillMyWorkgroupSheet(): Promise<void> {
   return identClient.getWorkgroups().then((apps) => {
     return excelWorker.showWorkgroups("My Workgroups", apps, true).then(spinnerOff);
   }, onError);
+}
+
+function startBaselining(): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+  return excelWorker.startBaselineService(identClient);
+}
+
+function onSetupBaselining(): Promise<unknown> {
+  return initializeBaselining();
+}
+
+function initializeBaselining(): Promise<unknown> {
+  if(!identClient) {
+    setUiForLogin();
+    return;
+  }
+
+  spinnerOn();
+  return excelWorker.createInitialSetup().then(spinnerOff, onError);
 }

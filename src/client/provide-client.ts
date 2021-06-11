@@ -1,5 +1,5 @@
-import { Application, Contract, Organization, Key, Wallet, Vault as ProvideVault } from "@provide/types";
-import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory } from "provide-js";
+import { Application, Contract, Organization, Key, Wallet, Vault as ProvideVault, BaselineResponse, BusinessObject } from "@provide/types";
+import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory, baselineClientFactory } from "provide-js";
 import { Uuid, TokenStr } from "../models/common";
 import { AuthParams } from "../models/auth-params";
 import * as jwt from "jsonwebtoken";
@@ -16,6 +16,12 @@ export interface ProvideClient {
   logout(): Promise<void>;
 
   getWorkgroups(): Promise<Application[]>;
+
+  // eslint-disable-next-line no-unused-vars
+  sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse>;
+
+  // eslint-disable-next-line no-unused-vars
+  sendUpdateProtocolMessage(primaryKey: string, message: BusinessObject): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
   acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void>;
@@ -86,6 +92,21 @@ class ProvideClientImpl implements ProvideClient {
     return retVal;
   }
 
+  async sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse> {
+    const retVal = await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, "https", "a4246b28e8d9.ngrok.io");
+      return baselineService.createBusinessObject(message);
+    });
+    return retVal;
+  }
+
+  async sendUpdateProtocolMessage(primaryKey: string, message: BusinessObject): Promise<BaselineResponse> {
+    const retVal = await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken,"https", "a4246b28e8d9.ngrok.io");
+      return baselineService.updateBusinessObject(primaryKey, message);
+    });
+    return retVal;
+  }
   async createWallet(): Promise<Wallet> {
     this.guardNotNullAppAuthContext();
 
