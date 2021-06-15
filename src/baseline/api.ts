@@ -1,6 +1,7 @@
 import { onError } from "../common/common";
 import { baseline } from "./index";
 import { showPrimaryKeyDialog } from "../dialogs/dialogs-helpers";
+import { indexedDB } from "../settings/settings";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -11,9 +12,12 @@ export class ExcelAPI {
       let sheet = context.workbook.worksheets.getActiveWorksheet();
       let range = sheet.getUsedRange();
       let table = range.getTables().getFirst();
+      table.load('id');
 
       table.onChanged.add(this.onChange);
       await context.sync();
+
+      return await indexedDB.createObjectStore(table.id);
     } catch {
       this.catchError;
     }

@@ -31,6 +31,7 @@
     "@fortawesome/fontawesome-free": "^5.15.3",
     "bootstrap": "^4.6.0",
     "core-js": "^3.9.1",
+    "idb": "^6.1.2",
     "jquery": "^3.6.0",
     "jsonwebtoken": "8.5.1",
     "provide-js": "^1.6.1",

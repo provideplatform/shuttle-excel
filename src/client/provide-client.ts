@@ -21,7 +21,7 @@ export interface ProvideClient {
   sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
-  sendUpdateProtocolMessage(primaryKey: string, message: BusinessObject): Promise<BaselineResponse>;
+  sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
   acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void>;
@@ -100,10 +100,10 @@ class ProvideClientImpl implements ProvideClient {
     return retVal;
   }
 
-  async sendUpdateProtocolMessage(primaryKey: string, message: BusinessObject): Promise<BaselineResponse> {
+  async sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse> {
     const retVal = await this._orgAuthContext.get((accessToken) => {
       const baselineService = baselineClientFactory(accessToken,"https", "a4246b28e8d9.ngrok.io");
-      return baselineService.updateBusinessObject(primaryKey, message);
+      return baselineService.updateBusinessObject(baselineID, message);
     });
     return retVal;
   }

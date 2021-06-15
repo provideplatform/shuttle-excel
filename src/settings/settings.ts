@@ -4,6 +4,7 @@
 
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
+import { IDBPDatabase, openDB } from "idb";
 
 export interface ISettingsStorage {
   // eslint-disable-next-line no-unused-vars
@@ -85,6 +86,54 @@ class SessionStorageSettings extends StorageSettings {
   }
 }
 
+class IndexedDBSettings {
+  protected db: any;
+  private database: string;
+
+  constructor(database: string) {
+    this.database = database;
+  }
+  async createObjectStore(tableName: string): Promise<void> {
+    try {
+      this.db = await openDB(this.database, 1, {
+        upgrade(db: IDBPDatabase) {
+          if (!db.objectStoreNames.contains(tableName)) {
+            db.createObjectStore(tableName, { autoIncrement: true, keyPath: ["primaryKey", "columeName"] });
+          }
+        },
+      });
+    } catch (error) {
+      return;
+    }
+  }
+
+  async set(tableName: string, key: string[], value: string): Promise<void> {
+    const tx = this.db.transaction(tableName, "readwrite");
+    const store = tx.objectStore(tableName);
+    const result = await store.put(value, key);
+    return result;
+  }
+  async get(tableName: string, key: string[]): Promise<any> {
+    const tx = this.db.transaction(tableName, "readonly");
+    const store = tx.objectStore(tableName);
+    const result = await store.get(key);
+    return result;
+  }
+  async remove(tableName: string, key: string[]): Promise<void> {
+    const tx = this.db.transaction(tableName, "readwrite");
+    const store = tx.objectStore(tableName);
+    const result = await store.get(key);
+    if (!result) {
+      console.log("Key not found", key);
+      return result;
+    }
+    await store.delete(key);
+    console.log("Data Deleted", key);
+    return;
+  }
+}
+
+
 const documentSettings: ISettingsStorage = new DocumentSettings();
 // eslint-disable-next-line no-unused-vars
 const localStorageSettings: ISettingsStorage = new LocalStorageSettings();
@@ -96,12 +145,12 @@ class Settings {
 
   async getRefreshToken(): Promise<TokenStr | null> {
     const value = await documentSettings.get(this.NAME);
-    return (value && value["refreshToken"] as TokenStr) || null;
+    return (value && (value["refreshToken"] as TokenStr)) || null;
   }
 
   async getUser(): Promise<User | null> {
     const value = await documentSettings.get(this.NAME);
-    return (value &&  value["user"] as User) || null;
+    return (value && (value["user"] as User)) || null;
   }
 
   async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
@@ -120,3 +169,4 @@ class Settings {
 }
 
 export const settings = new Settings();
+export const indexedDB = new IndexedDBSettings('baselineDB');

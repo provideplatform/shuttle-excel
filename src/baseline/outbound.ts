@@ -1,6 +1,8 @@
 import { onError } from "../common/common";
-import { BusinessObject } from "@provide/types";
+import { BusinessObject, BaselineResponse } from "@provide/types";
 import { ProvideClient } from "src/client/provide-client";
+import { indexedDB } from "../settings/settings";
+
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
@@ -12,16 +14,16 @@ export class OutBound {
     
     let message = await this.createMessage(context, changedData, primaryKeyColumn);
     console.log(message);
-    let baselineResponse;
-    baselineResponse = await identClient.sendCreateProtocolMessage(message);
+    let baselineResponse: BaselineResponse;
+    let baselineID: string = await indexedDB.get(changedData.tableId, [message.payload.id, message.type]); 
 
-   /* if (message.payload.id && changedData.changeType == Excel.DataChangeType.rangeEdited) {
-      //Check if the baseline ID exists
-      baselineResponse = await identClient.sendUpdateProtocolMessage(message.payload.id, message); 
-    } else { 
-      
-     
-    }*/
+    if(!baselineID){
+      baselineResponse = await identClient.sendCreateProtocolMessage(message);
+      await indexedDB.set(changedData.tableId,[message.payload.id, message.type], baselineResponse.baselineId );
+    } else {
+      await identClient.sendUpdateProtocolMessage(baselineID, message); 
+    }
+
     console.log(baselineResponse);
     
   }
