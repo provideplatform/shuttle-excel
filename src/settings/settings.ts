@@ -4,7 +4,7 @@
 
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
-import { IDBPDatabase, openDB } from "idb";
+import { Record } from "../models/record";
 
 export interface ISettingsStorage {
   // eslint-disable-next-line no-unused-vars
@@ -87,7 +87,7 @@ class SessionStorageSettings extends StorageSettings {
 }
 
 class IndexedDBSettings {
-  protected db: any;
+  protected db: IDBDatabase;
   private database: string;
 
   constructor(database: string) {
@@ -95,44 +95,127 @@ class IndexedDBSettings {
   }
   async createObjectStore(tableName: string): Promise<void> {
     try {
-      this.db = await openDB(this.database, 1, {
-        upgrade(db: IDBPDatabase) {
-          if (!db.objectStoreNames.contains(tableName)) {
-            db.createObjectStore(tableName, { autoIncrement: true, keyPath: ["primaryKey", "columeName"] });
-          }
-        },
-      });
+      //Create or open the database
+      await indexedDB.deleteDatabase(this.database);
+      const request = await indexedDB.open(this.database, 1);
+
+      //on upgrade needed, create object store
+      request.onupgradeneeded = async (e) => {
+        this.db = (<IDBOpenDBRequest>e.target).result;
+
+        await this.db.createObjectStore(tableName+"Out", { keyPath: ["primaryKey", "columnName"] });
+        await this.db.createObjectStore(tableName+"In", { keyPath: "baselineID" });
+      };
+
+      //on success
+      request.onsuccess = (e) => {
+        this.db = (<IDBOpenDBRequest>e.target).result;
+      };
+
+      //on error
+      request.onerror = (e) => {
+        console.log((<IDBOpenDBRequest>e.target).error);
+      };
     } catch (error) {
       return;
     }
   }
 
   async set(tableName: string, key: string[], value: string): Promise<void> {
-    const tx = this.db.transaction(tableName, "readwrite");
-    const store = tx.objectStore(tableName);
-    const result = await store.put(value, key);
-    return result;
+    await this.setOutboundTable(tableName, key, value);
+    await this.setInboundTable(tableName, value, key);
   }
+
+  async setOutboundTable(tableName: string, key: string[], value: string): Promise<void> {
+    const record: Record = {
+      primaryKey: key[0],
+      columnName: key[1],
+      baselineID: value,
+    };
+    const tx = this.db.transaction(tableName+"Out", "readwrite");
+    const store = tx.objectStore(tableName+"Out");
+    store.put(record);
+  }
+
+  async setInboundTable(tableName: string, key: string, value: string[]): Promise<void> {
+    const record: Record = {
+      baselineID: key,
+      primaryKey: value[0],
+      columnName: value[1], 
+    };
+    const tx = this.db.transaction(tableName+"In", "readwrite");
+    const store = tx.objectStore(tableName+"In");
+    store.put(record);
+  }
+
+
   async get(tableName: string, key: string[]): Promise<any> {
-    const tx = this.db.transaction(tableName, "readonly");
-    const store = tx.objectStore(tableName);
-    const result = await store.get(key);
-    return result;
+    var record: Record = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(tableName+"Out", "readonly");
+      const store = tx.objectStore(tableName+"Out");
+      const request = store.get(key);
+
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+
+    return record.baselineID;
   }
+
+  async getKey(tableName: string, key: string): Promise<any> {
+    var record: Record = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(tableName+"In", "readonly");
+      const store = tx.objectStore(tableName+"In");
+      const request = store.get(key);
+
+      request.onsuccess = () => {
+        console.log(request.result);
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+
+    return [record.primaryKey, record.columnName];
+  }
+
+  async recordCount(tableName: string, key: string[]): Promise<number> {
+    var recordCount: number = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(tableName+"Out", "readonly");
+      const store = tx.objectStore(tableName+"Out");
+      const request = store.count(key);
+
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+
+    return recordCount;
+  }
+
   async remove(tableName: string, key: string[]): Promise<void> {
     const tx = this.db.transaction(tableName, "readwrite");
     const store = tx.objectStore(tableName);
     const result = await store.get(key);
     if (!result) {
       console.log("Key not found", key);
-      return result;
     }
     await store.delete(key);
     console.log("Data Deleted", key);
     return;
   }
 }
-
 
 const documentSettings: ISettingsStorage = new DocumentSettings();
 // eslint-disable-next-line no-unused-vars
@@ -169,4 +252,4 @@ class Settings {
 }
 
 export const settings = new Settings();
-export const indexedDB = new IndexedDBSettings('baselineDB');
+export const indexedDatabase = new IndexedDBSettings("baselineDB");

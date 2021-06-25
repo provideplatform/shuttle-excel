@@ -51,11 +51,11 @@ export class ExcelWorker {
   }
 
   createInitialSetup(): Promise<unknown> {
-    return baseline.createListeners();
+    return baseline.createTableListeners();
   }
 
   startBaselineService(identClient: ProvideClient): Promise<void> {
-    return baseline.setBaselineServiceClient(identClient);
+    return baseline.startToSendAndReceiveProtocolMessage(identClient);
   }
 
   private catchError(error: any): void {

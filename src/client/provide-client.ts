@@ -1,10 +1,20 @@
-import { Application, Contract, Organization, Key, Wallet, Vault as ProvideVault, BaselineResponse, BusinessObject } from "@provide/types";
+import {
+  Application,
+  Contract,
+  Organization,
+  Key,
+  Wallet,
+  Vault as ProvideVault,
+  BaselineResponse,
+  BusinessObject,
+} from "@provide/types";
 import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory, baselineClientFactory } from "provide-js";
 import { Uuid, TokenStr } from "../models/common";
 import { AuthParams } from "../models/auth-params";
 import * as jwt from "jsonwebtoken";
 import { AuthContext } from "./auth-context";
 import { AccessToken } from "./access-token";
+import { NatsClientFacade as NatsClient } from "./nats-listener";
 
 import { Token as _Token } from "../models/token";
 import { ServerUser as _User, User } from "../models/user";
@@ -12,10 +22,14 @@ import { ServerUser as _User, User } from "../models/user";
 export interface ProvideClient {
   readonly user: User;
   readonly userRefreshToken: TokenStr;
+  natsClient: NatsClient | null;
+
 
   logout(): Promise<void>;
 
   getWorkgroups(): Promise<Application[]>;
+
+  connectNatsClient(): Promise<void>;
 
   // eslint-disable-next-line no-unused-vars
   sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse>;
@@ -32,6 +46,7 @@ class ProvideClientImpl implements ProvideClient {
   private _userAuthContext: AuthContext;
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
+  private _NatsClient: NatsClient;
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -44,6 +59,10 @@ class ProvideClientImpl implements ProvideClient {
 
   get userRefreshToken(): TokenStr {
     return this._userAuthContext.refreshToken;
+  }
+
+  get natsClient(): NatsClient {
+    return this._NatsClient;
   }
 
   logout(): Promise<void> {
@@ -93,20 +112,37 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse> {
+    //TODO: Fetch Organization
+    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "a4246b28e8d9.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "5ae47cfbacfc.ngrok.io");
       return baselineService.createBusinessObject(message);
     });
     return retVal;
   }
 
   async sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse> {
+    //TODO: Fetch Organization
+    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken,"https", "a4246b28e8d9.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "5ae47cfbacfc.ngrok.io");
       return baselineService.updateBusinessObject(baselineID, message);
     });
     return retVal;
   }
+
+  async connectNatsClient(): Promise<void> {
+    //TODO: Fetch Organization
+    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
+    await this._orgAuthContext.get(async (accessToken) => {
+      
+      this._NatsClient = new NatsClient(accessToken);
+      return await this._NatsClient.connect();
+
+    });
+    return;
+  }
+
   async createWallet(): Promise<Wallet> {
     this.guardNotNullAppAuthContext();
 

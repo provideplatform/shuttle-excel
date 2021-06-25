@@ -1,13 +1,13 @@
 import { onError } from "../common/common";
 import { baseline } from "./index";
 import { showPrimaryKeyDialog } from "../dialogs/dialogs-helpers";
-import { indexedDB } from "../settings/settings";
+import { indexedDatabase } from "../settings/settings";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
 
 export class ExcelAPI {
-  async createExcelBinding(context: Excel.RequestContext): Promise<void> {
+  async createExcelBinding(context: Excel.RequestContext): Promise<string> {
     try {
       let sheet = context.workbook.worksheets.getActiveWorksheet();
       let range = sheet.getUsedRange();
@@ -17,11 +17,15 @@ export class ExcelAPI {
       table.onChanged.add(this.onChange);
       await context.sync();
 
-      return await indexedDB.createObjectStore(table.id);
+      await indexedDatabase.createObjectStore(table.id);
+      return table.id;
+      
     } catch {
       this.catchError;
     }
   }
+
+  
 
   //Read all the changed data.
   onChange(eventArgs: Excel.TableChangedEventArgs): Promise<unknown> {

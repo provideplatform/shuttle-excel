@@ -1,57 +1,70 @@
 import { excelAPI } from "./api";
 import { outboundMessage } from "./outbound";
+import { inboundMessage } from "./inbound";
 import { onError } from "../common/common";
 import { ProvideClient } from "src/client/provide-client";
+import { NatsClientFacade as NatsClient } from "../client/nats-listener";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
 
-export class Baseline {
-  //Create a binding popup
-  _websocket: WebSocket;
-  _primaryKey: String;
+export class Baseline { 
+  _primaryKeyColumn: String;
   _identClient: ProvideClient;
+  _natsClient: NatsClient; 
 
-  setBaselineServiceClient(identClient: ProvideClient): Promise<void> {
-    try {
-      this._identClient = identClient;
-      return;
-    } catch {
-      this.catchError;
-    }
-  }
-  
-  async createListeners(): Promise<unknown> {
-    return Excel.run((context: Excel.RequestContext) => {
-      excelAPI.createExcelBinding(context);
+  //Initialize baseline
+  async createTableListeners(): Promise<unknown> {
+    return Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.createExcelBinding(context);
       return context.sync().then(async () => {
-        this._primaryKey = await excelAPI.getPrimaryKeyColumn();
+        this._primaryKeyColumn = await excelAPI.getPrimaryKeyColumn();
       });
     }).catch(this.catchError);
   }
 
-  private createWebSocket(): Promise<WebSocket> {
-    return new Promise((resolve, reject) => {
-      let webSocket = new WebSocket("wss://localhost:8080");
+  //Start the Baseline Service after login
+  async startToSendAndReceiveProtocolMessage(identClient: ProvideClient): Promise<void> {
+    try {
 
-      if (webSocket) {
-        resolve(webSocket);
-      } else {
-        reject(Error);
-      }
-    });
-  }
+      //Set Provide client for sending messages
+      this._identClient = identClient;
+
+      //Connect to Nats for receiving messages
+     if (!this._natsClient) {
+       await this._identClient.connectNatsClient();
+       this._natsClient = this._identClient.natsClient;
+     }
+    
+     //Subscribe
+      this.receiveMessage();
+      
+
+      return;
+    } catch {
+      this.catchError;
+    }
+  } 
 
   sendMessage(changedData: Excel.TableChangedEventArgs): void {
    
     Excel.run((context: Excel.RequestContext) => {
-      outboundMessage.send(context, changedData, this._identClient, this._primaryKey);
+      outboundMessage.send(context, changedData, this._identClient, this._primaryKeyColumn);
       return context.sync(); 
-    }).catch(this.catchError);
-    
-    
+    }).catch(this.catchError); 
     
   }
+
+  receiveMessage(): void {
+   try {
+     inboundMessage.primaryKeyColumn = this._primaryKeyColumn;
+     this._natsClient.subscribe(">", inboundMessage.handler);
+   } catch {
+     this.catchError;
+   }
+  }
+
+
 
   private catchError(error: any): void {
     console.log("Error: " + error);
