@@ -9,16 +9,17 @@ import { NatsClientFacade as NatsClient } from "../client/nats-listener";
 /* global Excel, Office, OfficeExtension */
 
 export class Baseline { 
-  _primaryKeyColumn: String;
+  
   _identClient: ProvideClient;
-  _natsClient: NatsClient; 
+  _natsClient: NatsClient;
+  
 
   //Initialize baseline
   async createTableListeners(): Promise<unknown> {
     return Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.createExcelBinding(context);
+      var tableName = await excelAPI.createTableBinding(context);
       return context.sync().then(async () => {
-        this._primaryKeyColumn = await excelAPI.getPrimaryKeyColumn();
+        await excelAPI.getPrimaryKeyColumn(tableName);
       });
     }).catch(this.catchError);
   }
@@ -26,6 +27,9 @@ export class Baseline {
   //Start the Baseline Service after login
   async startToSendAndReceiveProtocolMessage(identClient: ProvideClient): Promise<void> {
     try {
+
+      //Activate listeners on table
+     await this.activateTableListeners();
 
       //Set Provide client for sending messages
       this._identClient = identClient;
@@ -49,7 +53,7 @@ export class Baseline {
   sendMessage(changedData: Excel.TableChangedEventArgs): void {
    
     Excel.run((context: Excel.RequestContext) => {
-      outboundMessage.send(context, changedData, this._identClient, this._primaryKeyColumn);
+      outboundMessage.send(context, changedData, this._identClient);
       return context.sync(); 
     }).catch(this.catchError); 
     
@@ -57,11 +61,17 @@ export class Baseline {
 
   receiveMessage(): void {
    try {
-     inboundMessage.primaryKeyColumn = this._primaryKeyColumn;
      this._natsClient.subscribe(">", inboundMessage.handler);
    } catch {
      this.catchError;
    }
+  }
+
+ async activateTableListeners() : Promise<unknown> {
+    return Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.addTableListener(context);
+      return context.sync();
+    }).catch(this.catchError);
   }
 
 

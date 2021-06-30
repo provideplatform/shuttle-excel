@@ -9,7 +9,7 @@ import { ProtocolMessage } from "../models/protocolMessage";
 /* global Excel, Office, OfficeExtension */
 
 export class InBound {
-  primaryKeyColumn: String;
+  tableID: string;
 
   handler(msg: ProtocolMessage) {
     Excel.run((context: Excel.RequestContext) => {
@@ -24,7 +24,8 @@ export class InBound {
     //OPTION 2: Refer to the primary key and column Name already given in the protocol message
 
     //DO a Lookup funtion with primary key and column name --> reverse of outbound
-    var address = await this.getDataCellAddress(context, record.primaryKey, record.columnName, this.primaryKeyColumn);
+    var primaryKeyColumn = await indexedDatabase.getPrimaryKey(this.tableID);
+    var address = await this.getDataCellAddress(context, record.primaryKey, record.columnName, primaryKeyColumn);
 
     var range = context.workbook.worksheets.getActiveWorksheet().getRange(address);
     range.values = [[msg.data]];
@@ -41,11 +42,12 @@ export class InBound {
     await context.sync();
 
     //OPTION 1: Use the baselineID received in protocol message and retrieve corresponding column Names and primary keys from IDB
+    this.tableID = table.id;
     var record: Record = await indexedDatabase.getKey(table.id, msg.baselineID);
     return record;
   }
 
-  private async getDataCellAddress(context: Excel.RequestContext, primaryKey: string, columnName: string, primaryKeyColumn: String): Promise<string> {
+  private async getDataCellAddress(context: Excel.RequestContext, primaryKey: string, columnName: string, primaryKeyColumn: string): Promise<string> {
     //Get column Header Cell
     let table = context.workbook.worksheets.getActiveWorksheet().getUsedRange().getTables().getFirst();
     let headerRange = table.getHeaderRowRange();

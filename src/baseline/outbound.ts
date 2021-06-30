@@ -7,21 +7,23 @@ import { indexedDatabase } from "../settings/settings";
 /* global Excel, Office, OfficeExtension */
 
 export class OutBound {
-  async send(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, identClient: ProvideClient, primaryKeyColumn: String): Promise<void> {
+  async send(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, identClient: ProvideClient): Promise<void> {
     try {
-      let message = await this.createMessage(context, changedData, primaryKeyColumn);
-      console.log(message);
-
+     
+      let tableName = await this.getTableName(context);
+      let message = await this.createMessage(context, changedData);
+      console.log(JSON.stringify(message));
       let baselineResponse: BaselineResponse;
 
-      let recordCount: number = await indexedDatabase.recordCount(changedData.tableId, [message.payload.id, message.type]);
+      let recordCount: number = await indexedDatabase.recordCount(tableName, [message.payload.id, message.type]);
+      
 
       if (recordCount < 1) {
         baselineResponse = await identClient.sendCreateProtocolMessage(message);
         console.log(baselineResponse);
-        await indexedDatabase.set(changedData.tableId, [message.payload.id, message.type], baselineResponse.baselineId);
+        await indexedDatabase.set(tableName, [message.payload.id, message.type], baselineResponse.baselineId);
       } else {
-        let baselineID = await indexedDatabase.get(changedData.tableId, [message.payload.id, message.type]);
+        let baselineID = await indexedDatabase.get(tableName, [message.payload.id, message.type]);
         baselineResponse = await identClient.sendUpdateProtocolMessage(baselineID, message);
         console.log(baselineResponse);
       }
@@ -30,9 +32,12 @@ export class OutBound {
     }
   }
 
-  private async createMessage(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, primaryKeyColumn: String): Promise<BusinessObject> {
-    let primaryKey = await this.getPrimaryKey(context, changedData, primaryKeyColumn);
+  private async createMessage(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs): Promise<BusinessObject> {
+    let tableName = await this.getTableName(context);
+    let record = await indexedDatabase.getPrimaryKey(tableName); 
+    let primaryKey = await this.getPrimaryKey(context, changedData, record.primaryKey); 
     let dataColumnHeader = await this.getDataColumnHeader(context, changedData);
+   
 
     let message: BusinessObject = {} as BusinessObject;
     message.type = dataColumnHeader;
@@ -44,6 +49,7 @@ export class OutBound {
 
     message.payload = _payload;
 
+    
     return message;
   }
 
@@ -77,6 +83,17 @@ export class OutBound {
       return context.sync().then(() => {
         return dataColumn.values[0][0];
       });
+    } catch {
+      this.catchError;
+    }
+  }
+
+  private async getTableName(context: Excel.RequestContext): Promise<string> {
+    try {
+      let table = context.workbook.worksheets.getActiveWorksheet().getUsedRange().getTables().getFirst();
+      table.load("name");
+      await context.sync();
+      return table.name;
     } catch {
       this.catchError;
     }

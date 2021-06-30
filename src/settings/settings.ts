@@ -96,15 +96,18 @@ class IndexedDBSettings {
   async createObjectStore(tableName: string): Promise<void> {
     try {
       //Create or open the database
+      //ONLY FOR TEST
       await indexedDB.deleteDatabase(this.database);
       const request = await indexedDB.open(this.database, 1);
 
       //on upgrade needed, create object store
       request.onupgradeneeded = async (e) => {
         this.db = (<IDBOpenDBRequest>e.target).result;
-
         await this.db.createObjectStore(tableName+"Out", { keyPath: ["primaryKey", "columnName"] });
         await this.db.createObjectStore(tableName+"In", { keyPath: "baselineID" });
+        if(!this.db.objectStoreNames.contains("tablePrimaryKeys")) {
+          await this.db.createObjectStore("tablePrimaryKeys", { keyPath: "tableID" });}
+      
       };
 
       //on success
@@ -121,6 +124,31 @@ class IndexedDBSettings {
     }
   }
 
+  async openDB(): Promise<void> {
+    try {
+      //Open database
+      const request = await indexedDB.open(this.database, 1);
+
+      //on upgrade needed, create object store
+      request.onupgradeneeded = async (e) => {
+        this.db = (<IDBOpenDBRequest>e.target).result;
+       if(!this.db.objectStoreNames.contains("tablePrimaryKeys")) {
+          await this.db.createObjectStore("tablePrimaryKeys", { keyPath: "tableID" });}
+      };
+
+      //on success
+      request.onsuccess = (e) => {
+        this.db = (<IDBOpenDBRequest>e.target).result;
+      };
+
+      //on error
+      request.onerror = (e) => {
+        console.log((<IDBOpenDBRequest>e.target).error);
+      };
+    } catch (error) {
+      return;
+    }
+  }
   async set(tableName: string, key: string[], value: string): Promise<void> {
     await this.setOutboundTable(tableName, key, value);
     await this.setInboundTable(tableName, value, key);
@@ -148,6 +176,15 @@ class IndexedDBSettings {
     store.put(record);
   }
 
+  async setPrimaryKey(key: string, value: string): Promise<void> {
+    const record = {
+      tableID : key,
+      primaryKey : value
+    }
+    const tx = this.db.transaction("tablePrimaryKeys", "readwrite");
+    const store = tx.objectStore("tablePrimaryKeys");
+    store.put(record);
+  }
 
   async get(tableName: string, key: string[]): Promise<any> {
     var record: Record = await new Promise((resolve, reject) => {
@@ -174,7 +211,6 @@ class IndexedDBSettings {
       const request = store.get(key);
 
       request.onsuccess = () => {
-        console.log(request.result);
         resolve(request.result);
       };
 
@@ -185,6 +221,33 @@ class IndexedDBSettings {
 
     return [record.primaryKey, record.columnName];
   }
+
+  async getPrimaryKey(key: string) : Promise<any> {
+    var primaryKey = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction("tablePrimaryKeys", "readonly"); 
+      const store = tx.objectStore("tablePrimaryKeys");
+      const request = store.get(key);
+
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        console.log(request.error);
+        reject(request.error);
+      };
+    });
+    
+    return primaryKey; 
+  }
+
+  async tableExists(tableName: string) : Promise<boolean> {
+    if(this.db.objectStoreNames.contains(tableName+"Out"))
+      return true;
+    
+    return false; 
+  }
+
 
   async recordCount(tableName: string, key: string[]): Promise<number> {
     var recordCount: number = await new Promise((resolve, reject) => {

@@ -22,7 +22,7 @@ export class ExcelWorker {
         this.renderWorkgroups(sheet, applications);
 
         if (active) {
-          sheet.activate();
+          //sheet.activate();
         }
 
         return context.sync();
