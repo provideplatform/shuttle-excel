@@ -7,7 +7,7 @@ import { indexedDatabase } from "../settings/settings";
 /* global Excel, OfficeExtension, Office */
 
 export class ExcelAPI {
-  tableToBaseline: string ;
+  tableToBaseline: string;
 
   async createTableBinding(context: Excel.RequestContext): Promise<string> {
     try {
@@ -19,12 +19,7 @@ export class ExcelAPI {
       table.onChanged.add(this.onChange);
       await context.sync();
 
-      table.name = table.name + "B";
-      await context.sync;
-
       await indexedDatabase.createObjectStore(table.name);
-      
-
 
       return table.name;
     } catch {
@@ -32,13 +27,11 @@ export class ExcelAPI {
     }
   }
 
-  
-
   //Read all the changed data.
   onChange(eventArgs: Excel.TableChangedEventArgs): Promise<unknown> {
     //Set global variables
     baseline.sendMessage(eventArgs);
-   
+
     return new Promise((resolve, reject) => {
       if (eventArgs) {
         resolve(eventArgs);
@@ -48,51 +41,28 @@ export class ExcelAPI {
     });
   }
 
- 
-  
-  
   //Add listener to table
-  //TODO: MAKE THIS CONDITIONAL ONLY IF THE BASELINING HAS BEEN ADDED FOR THIS TABLE
-  async addTableListener(context: Excel.RequestContext) : Promise<void> {
+  async addTableListener(context: Excel.RequestContext): Promise<void> {
     try {
       let sheet = context.workbook.worksheets.getActiveWorksheet();
       let range = sheet.getUsedRange();
       let table = range.getTables().getFirst();
-      table.load('name');
+      table.load("name");
 
       await context.sync();
 
-      await indexedDatabase.openDB();
-     
-     if(this.tableExists(table.name)){
+      var tableExists = await indexedDatabase.openDB(table.name);
+
+     if (tableExists) {
         table.onChanged.add(this.onChange);
         await context.sync();
-        console.log("Listeners activated");
      }
-       
-      
     } catch {
       this.catchError;
-    } 
+    }
   }
 
- tableExists(tableName) : boolean {
-
-  if(tableName.split("").slice(-1)[0] == "B"){
-    return true;
-  }
-
-  return false;
-
- }
-
-
-
-
-
-  
-
-  async getPrimaryKeyColumn(tableID : string): Promise<string> {
+  async getPrimaryKeyColumn(tableID: string): Promise<string> {
     let primaryKeyColumn: string;
 
     await showPrimaryKeyDialog().then(
@@ -104,10 +74,8 @@ export class ExcelAPI {
       }
     );
 
-    await indexedDatabase.setPrimaryKey(tableID, primaryKeyColumn)
+    await indexedDatabase.setPrimaryKey(tableID, primaryKeyColumn);
     return primaryKeyColumn;
-
-    //TODO: Create a range binding
   }
 
   private catchError(error: any): void {
