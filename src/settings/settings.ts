@@ -282,7 +282,7 @@ class IndexedDBSettings {
 
   }
 
-  async recordCount(tableName: string, key: string[]): Promise<number> {
+  async recordExists(tableName: string, key: string[]): Promise<boolean> {
     var recordCount: number = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName+"Out", "readonly");
       const store = tx.objectStore(tableName+"Out");
@@ -297,7 +297,11 @@ class IndexedDBSettings {
       };
     });
 
-    return recordCount;
+    if (recordCount > 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   async remove(tableName: string, key: string[]): Promise<void> {

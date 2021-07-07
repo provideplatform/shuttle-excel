@@ -15,10 +15,10 @@ export class OutBound {
       console.log(JSON.stringify(message));
       let baselineResponse: BaselineResponse;
 
-      let recordCount: number = await indexedDatabase.recordCount(tableName, [message.payload.id, message.type]);
+      let recordExists = await indexedDatabase.recordExists(tableName, [message.payload.id, message.type]);
       
 
-      if (recordCount < 1) {
+      if (!recordExists) {
         baselineResponse = await identClient.sendCreateProtocolMessage(message);
         console.log(baselineResponse);
         await indexedDatabase.set(tableName, [message.payload.id, message.type], baselineResponse.baselineId);
@@ -40,11 +40,14 @@ export class OutBound {
    
 
     let message: BusinessObject = {} as BusinessObject;
-    message.type = dataColumnHeader;
+   message.id = primaryKey.toString(); 
+    message.type = "general_consistency";
+
 
     let _payload = {
       id: primaryKey.toString(),
       data: changedData.details.valueAfter,
+      type: dataColumnHeader
     };
 
     message.payload = _payload;

@@ -1,7 +1,7 @@
 import * as natsutil from 'ts-natsutil';
 export class NatsClientFacade {
   public static readonly DEFAULT_SCHEME = 'wss';
-  public static readonly DEFAULT_HOST = 'localhost:4222';
+  public static readonly DEFAULT_HOST = 'localhost:4221';
   public static readonly DEFAULT_PATH = '';
   private readonly bearerToken?: string;
   private readonly natsUrl: string;
@@ -16,20 +16,14 @@ export class NatsClientFacade {
    * @param host The domain name or ip address and port of the service
    * @param path The base path
    */
-  constructor(
-    bearerToken?: string,
-    scheme = NatsClientFacade.DEFAULT_SCHEME,
-    host = NatsClientFacade.DEFAULT_HOST,
-    path?: string,
-  ) {
+  constructor(bearerToken?: string, scheme = NatsClientFacade.DEFAULT_SCHEME, host = NatsClientFacade.DEFAULT_HOST, path?: string) {
     this.bearerToken = bearerToken;
     this.natsUrl = `${scheme}://${host}/${path ? `${path}/` : ''}`;
   }
+
+  //TODO : Need to check the Nats service factory --> NatsService/NatsWS implements INatsService
   public connect(): Promise<any> {
-    const service = natsutil.natsServiceFactory({
-      bearerToken: this.bearerToken,
-      servers: [this.natsUrl]
-    });
+    const service = natsutil.natsServiceFactory({bearerToken: this.bearerToken, natsServers: [this.natsUrl]});
     return service.connect().then(() => {
       console.log(`NATS connection established to endpoint: ${this.natsUrl}`);
       this.service = service;

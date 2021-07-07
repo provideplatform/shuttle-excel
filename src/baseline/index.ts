@@ -35,11 +35,16 @@ export class Baseline {
       this._identClient = identClient;
 
       //Connect to Nats for receiving messages
+      //TODO : Check NATS client
      if (!this._natsClient) {
+       //PROBLEM
+       console.log("Connecting to Nats");
        await this._identClient.connectNatsClient();
+       console.log("Connected to Nats")
        this._natsClient = this._identClient.natsClient;
      }
-    
+   
+     
      //Subscribe
       this.receiveMessage();
       
@@ -62,12 +67,13 @@ export class Baseline {
   receiveMessage(): void {
    try {
      this._natsClient.subscribe(">", inboundMessage.handler);
+     
    } catch {
      this.catchError;
    }
   }
 
- async activateTableListeners() : Promise<unknown> {
+ private async activateTableListeners() : Promise<unknown> {
     return Excel.run(async (context: Excel.RequestContext) => {
       await excelAPI.addTableListener(context);
       return context.sync();

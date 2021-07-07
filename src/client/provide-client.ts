@@ -112,35 +112,44 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse> {
-    //TODO: Fetch Organization
-    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "d05ee9b3bae0.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "01b7e71eb4b7.ngrok.io");
       return baselineService.createBusinessObject(message);
     });
     return retVal;
   }
 
   async sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse> {
-    //TODO: Fetch Organization
-    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "d05ee9b3bae0.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "01b7e71eb4b7.ngrok.io");
       return baselineService.updateBusinessObject(baselineID, message);
     });
     return retVal;
   }
 
   async connectNatsClient(): Promise<void> {
-    //TODO: Fetch Organization
-    await this.authorizeOrganization("17a38750-5e0d-4c5c-b52b-098ae52ce6c4");
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
     await this._orgAuthContext.get(async (accessToken) => {
-      
+     
       this._NatsClient = new NatsClient(accessToken);
       return await this._NatsClient.connect();
 
     });
     return;
+  }
+
+  private async getOrgID(): Promise<string> {
+    
+    const organization = await this._userAuthContext.get((accessToken) => {
+      const identService = identClientFactory(accessToken);
+      return identService.fetchOrganizations({});
+    });
+    return organization[0].id;
   }
 
   async createWallet(): Promise<Wallet> {
