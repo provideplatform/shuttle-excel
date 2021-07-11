@@ -19,7 +19,7 @@ export class ExcelWorker {
           sheet = sheets.add(sheetName);
         }
 
-        this.renderWorkgroups(sheet, applications);
+        //this.renderWorkgroups(sheet, applications);
 
         if (active) {
           //sheet.activate();
