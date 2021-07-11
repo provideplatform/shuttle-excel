@@ -320,7 +320,7 @@ class IndexedDBSettings {
 const documentSettings: ISettingsStorage = new DocumentSettings();
 // eslint-disable-next-line no-unused-vars
 const localStorageSettings: ISettingsStorage = new LocalStorageSettings();
-// eslint-disable-next-line no-unused-vars
+
 const sessionStorageSettings: ISettingsStorage = new SessionStorageSettings();
 
 class Settings {
@@ -351,5 +351,29 @@ class Settings {
   }
 }
 
+class SessionSettings {
+
+  async getRefreshToken(): Promise<TokenStr | null> {
+    const value = await sessionStorageSettings.get("refreshToken");
+    return (value as TokenStr) || null;
+  }
+
+  async getUser(): Promise<User | null> {
+    const value = await sessionStorageSettings.get("user");
+    return (value as User) || null;
+  }
+
+  async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
+    await sessionStorageSettings.set("refreshToken", token);
+    await sessionStorageSettings.set("user", user);
+  }
+
+  async removeTokenAndUser(): Promise<void> {
+    await sessionStorageSettings.remove("refreshToken");
+    await sessionStorageSettings.remove("user");
+  } 
+}
+
 export const settings = new Settings();
 export const indexedDatabase = new IndexedDBSettings("baselineDB");
+export const sessionSettings = new SessionSettings();

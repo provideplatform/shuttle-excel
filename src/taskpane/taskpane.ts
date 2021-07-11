@@ -3,7 +3,7 @@ import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
-import { settings } from "../settings/settings";
+import { sessionSettings as session } from "../settings/settings";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
@@ -40,7 +40,7 @@ Office.onReady((info) => {
 });
 
 function tryRestoreAutorization() {
-  return Promise.all([settings.getRefreshToken(), settings.getUser()]).then(([refreshToken, user]) => {
+  return Promise.all([session.getRefreshToken(), session.getUser()]).then(([refreshToken, user]) => {
     if (!refreshToken || !user) {
       setUiForLogin();
       spinnerOff();
@@ -56,7 +56,7 @@ function tryRestoreAutorization() {
         spinnerOff();
       },
       (reason) => {
-        settings.removeTokenAndUser();
+        session.removeTokenAndUser();
         setUiForLogin();
         onError(reason);
       }
@@ -111,7 +111,7 @@ function onLogin(): Promise<void> {
       const token: TokenStr = identClient.userRefreshToken;
       const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
-      return settings.setTokenAndUser(token, user).then(spinnerOff);
+      return session.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
     .then(fillMyWorkgroupSheet)
     .then(startBaselining);
@@ -127,7 +127,7 @@ function onLogout() {
     .logout()
     .then(() => {
       identClient = null;
-      return settings.removeTokenAndUser();
+      return session.removeTokenAndUser();
     }, onError)
     .then(() => {
       setUiForLogin();

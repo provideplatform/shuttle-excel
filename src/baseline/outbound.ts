@@ -16,7 +16,8 @@ export class OutBound {
       let baselineResponse: BaselineResponse;
 
       let recordExists = await indexedDatabase.recordExists(tableName, [message.payload.id, message.type]);
-      
+     
+      console.log(recordExists);
 
       if (!recordExists) {
         baselineResponse = await identClient.sendCreateProtocolMessage(message);

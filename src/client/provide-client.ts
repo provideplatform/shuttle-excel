@@ -115,7 +115,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "01b7e71eb4b7.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "baseline.provide.services");
       return baselineService.createBusinessObject(message);
     });
     return retVal;
@@ -125,7 +125,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "01b7e71eb4b7.ngrok.io");
+      const baselineService = baselineClientFactory(accessToken, "https", "baseline.provide.services");
       return baselineService.updateBusinessObject(baselineID, message);
     });
     return retVal;

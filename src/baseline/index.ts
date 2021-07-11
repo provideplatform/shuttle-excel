@@ -66,7 +66,7 @@ export class Baseline {
 
   receiveMessage(): void {
    try {
-     this._natsClient.subscribe(">", inboundMessage.handler);
+     this._natsClient.subscribe("baseline-proxy.inbound", inboundMessage.handler);
      
    } catch {
      this.catchError;
