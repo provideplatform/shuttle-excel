@@ -20,6 +20,7 @@ export class ExcelWorker {
         }
 
         //this.renderWorkgroups(sheet, applications);
+        //Removed functionality
 
         if (active) {
           //sheet.activate();
