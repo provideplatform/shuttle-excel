@@ -47,6 +47,7 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
+  private HOST = "9a9190723237.ngrok.io";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -115,7 +116,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "baseline.provide.services");
+      const baselineService = baselineClientFactory(accessToken, "https", this.HOST);
       return baselineService.createBusinessObject(message);
     });
     return retVal;
@@ -125,7 +126,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", "baseline.provide.services");
+      const baselineService = baselineClientFactory(accessToken, "https", this.HOST);
       return baselineService.updateBusinessObject(baselineID, message);
     });
     return retVal;

@@ -5,6 +5,7 @@
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { Record } from "../models/record";
+//import { readFileSync, writeFileSync, unlinkSync, openSync } from "fs";
 
 export interface ISettingsStorage {
   // eslint-disable-next-line no-unused-vars
@@ -202,7 +203,7 @@ class IndexedDBSettings {
     store.put(record);
   }
 
-  async get(tableName: string, key: string[]): Promise<any> {
+  async get(tableName: string, key: string[]): Promise<string> {
     var record: Record = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName+"Out", "readonly");
       const store = tx.objectStore(tableName+"Out");
@@ -238,8 +239,8 @@ class IndexedDBSettings {
     return [record.primaryKey, record.columnName];
   }
 
-  async getPrimaryKey(key: string) : Promise<any> {
-    var primaryKey = await new Promise((resolve, reject) => {
+  async getPrimaryKeyField(key: string) : Promise<any> {
+    var record = await new Promise((resolve, reject) => {
       const tx = this.db.transaction("tablePrimaryKeys", "readonly"); 
       const store = tx.objectStore("tablePrimaryKeys");
       const request = store.get(key);
@@ -253,8 +254,8 @@ class IndexedDBSettings {
         reject(request.error);
       };
     });
-    
-    return primaryKey; 
+  
+    return record["primaryKey"]; 
   }
 
   private async tableExists(tableName: string) : Promise<boolean> {
@@ -374,6 +375,58 @@ class SessionSettings {
   } 
 }
 
+/*class DiskStorageSettings {
+
+  constructor() {
+    openSync("./userInfo.json", 'r', 0o600)
+  }
+
+  async getRefreshToken(): Promise<TokenStr | null> {
+    try {
+      var fileContent = readFileSync("./userInfo.json");
+      var value = JSON.parse(fileContent.toString()).user;
+
+      return (value as TokenStr) || null;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async getUser(): Promise<User | null> {
+    try {
+      var fileContent = readFileSync("./userInfo.json");
+      var value = JSON.parse(fileContent.toString()).user;
+
+      return (value as User) || null;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
+    try {
+      const UserInfo = {
+        refreshToken: token,
+        user: user,
+      };
+      const data = JSON.stringify(UserInfo);
+
+      writeFileSync("./userInfo.json", data, { mode: 0o600 });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async removeTokenAndUser(): Promise<void> {
+    try {
+      unlinkSync("./userInfo.json");
+    } catch (error) {
+      console.log(error);
+    }
+  }
+}*/
+
 export const settings = new Settings();
 export const indexedDatabase = new IndexedDBSettings("baselineDB");
 export const sessionSettings = new SessionSettings();
+//export const diskStorage = new DiskStorageSettings(); 

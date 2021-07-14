@@ -27,27 +27,38 @@ export class Baseline {
   //Start the Baseline Service after login
   async startToSendAndReceiveProtocolMessage(identClient: ProvideClient): Promise<void> {
     try {
-
       //Activate listeners on table
-     await this.activateTableListeners();
+      await this.activateTableListeners();
 
       //Set Provide client for sending messages
       this._identClient = identClient;
 
+      var data = {};
+      data["Region"] = "Central";
+
+      const test = {
+        baselineID: "89455b85-6fec-4aec-a40d-551df0b13ca8",
+        id: "574733300",
+        type: "general_consistency",
+        payload: {
+          id: "574733300",
+          data: data,
+        },
+      };
+      inboundMessage.handler(test);
+
       //Connect to Nats for receiving messages
       //TODO : Check NATS client
-     if (!this._natsClient) {
-       //PROBLEM
-       console.log("Connecting to Nats");
-       await this._identClient.connectNatsClient();
-       console.log("Connected to Nats")
-       this._natsClient = this._identClient.natsClient;
-     }
-   
-     
-     //Subscribe
+      if (!this._natsClient) {
+        //PROBLEM
+        console.log("Connecting to Nats");
+        await this._identClient.connectNatsClient();
+        console.log("Connected to Nats");
+        this._natsClient = this._identClient.natsClient;
+      }
+
+      //Subscribe
       this.receiveMessage();
-      
 
       return;
     } catch {
@@ -67,7 +78,7 @@ export class Baseline {
   receiveMessage(): void {
    try {
      this._natsClient.subscribe("baseline-proxy.inbound", inboundMessage.handler);
-     
+           
    } catch {
      this.catchError;
    }

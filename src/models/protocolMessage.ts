@@ -1,7 +1,11 @@
 //TO DO
 export interface ProtocolMessage {
 	baselineID: string;
-	columnName: string;
-	data: string;
-      }
+	id : string;
+        type : string,
+        payload: {
+          id: string,
+          data: {}
+        }
+}
       

@@ -16,7 +16,7 @@ export class ExcelWorker {
       return context.sync().then(() => {
         let sheet: Excel.Worksheet = sheets.items.find((x) => x.name === sheetName);
         if (!sheet) {
-          sheet = sheets.add(sheetName);
+          //sheet = sheets.add(sheetName);
         }
 
         //this.renderWorkgroups(sheet, applications);

@@ -9,25 +9,27 @@ import { indexedDatabase } from "../settings/settings";
 export class OutBound {
   async send(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, identClient: ProvideClient): Promise<void> {
     try {
-     
-      let tableName = await this.getTableName(context);
-      let message = await this.createMessage(context, changedData);
-      console.log(JSON.stringify(message));
-      let baselineResponse: BaselineResponse;
-
-      let recordExists = await indexedDatabase.recordExists(tableName, [message.payload.id, message.type]);
-     
-      console.log(recordExists);
-
-      if (!recordExists) {
-        baselineResponse = await identClient.sendCreateProtocolMessage(message);
-        console.log(baselineResponse);
-        await indexedDatabase.set(tableName, [message.payload.id, message.type], baselineResponse.baselineId);
-      } else {
-        let baselineID = await indexedDatabase.get(tableName, [message.payload.id, message.type]);
-        baselineResponse = await identClient.sendUpdateProtocolMessage(baselineID, message);
-        console.log(baselineResponse);
-      }
+       
+        let tableName = await this.getTableName(context);
+        let message = await this.createMessage(context, changedData);
+        console.log(JSON.stringify(message));
+        let baselineResponse: BaselineResponse;
+  
+        let recordExists = await indexedDatabase.recordExists(tableName, [message.payload.id, message.type]);
+       
+        console.log(recordExists);
+  
+        if (!recordExists) {
+          baselineResponse = await identClient.sendCreateProtocolMessage(message);
+          console.log(baselineResponse);
+          await indexedDatabase.set(tableName, [message.payload.id, message.type], baselineResponse.baselineId);
+        } else {
+          let baselineID = await indexedDatabase.get(tableName, [message.payload.id, message.type]);
+          console.log("Baseline ID: " + baselineID);
+          baselineResponse = await identClient.sendUpdateProtocolMessage(baselineID, message);
+          console.log("Baseline message : " + baselineResponse);
+        } 
+      
     } catch {
       this.catchError;
     }
@@ -35,20 +37,21 @@ export class OutBound {
 
   private async createMessage(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs): Promise<BusinessObject> {
     let tableName = await this.getTableName(context);
-    let record = await indexedDatabase.getPrimaryKey(tableName); 
-    let primaryKey = await this.getPrimaryKey(context, changedData, record.primaryKey); 
+    let primaryKey = await indexedDatabase.getPrimaryKeyField(tableName); 
+    let id = await this.getPrimaryKey(context, changedData, primaryKey);
     let dataColumnHeader = await this.getDataColumnHeader(context, changedData);
    
 
     let message: BusinessObject = {} as BusinessObject;
-   message.id = primaryKey.toString(); 
+    message.id = id;
     message.type = "general_consistency";
 
+    const data = {};
+    data[dataColumnHeader] = changedData.details.valueAfter;
 
     let _payload = {
-      id: primaryKey.toString(),
-      data: changedData.details.valueAfter,
-      type: dataColumnHeader
+      id: id,
+      data: data,
     };
 
     message.payload = _payload;
@@ -57,22 +60,17 @@ export class OutBound {
     return message;
   }
 
-  private getPrimaryKey(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, primaryKeyColumn: String): Promise<string | number | boolean> {
+  private async getPrimaryKey(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs, primaryKeyColumn: String): Promise<string> {
     try {
-      let dataCell = context.workbook.worksheets.getActiveWorksheet().getRange(changedData.address);
-      let dataColumn = changedData.address.split(/\d+/)[0];
-      let dataRange = context.workbook.worksheets.getActiveWorksheet().getRange(dataColumn + ":" + dataColumn);
-      let primaryKeyRange = context.workbook.worksheets
+      let primaryKeyCell = primaryKeyColumn + changedData.address.split(/\D+/)[1];
+      let primaryKeyID = context.workbook.worksheets
         .getActiveWorksheet()
-        .getRange(primaryKeyColumn + ":" + primaryKeyColumn);
+        .getRange(primaryKeyCell + ":" + primaryKeyCell);
 
-      let primaryKeyID = context.workbook.functions.lookup(dataCell, dataRange, primaryKeyRange);
+      primaryKeyID.load("values");
+      await context.sync();
 
-      primaryKeyID.load("value");
-
-      return context.sync().then(() => {
-        return primaryKeyID.value;
-      });
+      return primaryKeyID.values[0][0].toString();
     } catch {
       this.catchError;
     }
