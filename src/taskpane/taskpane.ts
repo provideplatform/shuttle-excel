@@ -1,8 +1,12 @@
 import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
+// eslint-disable-next-line no-unused-vars
+import { Application, Mapping } from "@provide/types";
 import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
+import { mappingForm, MappingForm } from "./mappingForm";
+//import { unmapped } from "./unmapped";
 import { sessionSettings as session } from "../settings/settings";
 //import { diskStorage } from "../settings/settings";
 import { TokenStr } from "../models/common";
@@ -29,13 +33,14 @@ const stubAuth = false;
 /* global Excel, OfficeExtension, Office */
 
 let identClient: ProvideClient | null;
+//let mappingForm: MappingForm;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     $(function () {
       initUi();
 
-      tryRestoreAutorization().then(fillMyWorkgroupSheet).then(startBaselining);
+      tryRestoreAutorization().then(getMyWorkgroups).then(startBaselining);
     });
   }
 });
@@ -67,17 +72,18 @@ function tryRestoreAutorization() {
 
 function initUi() {
   $("#login-btn").on("click", onLogin);
-
   $("#logout-btn").on("click", onLogout);
-  $("#get-workgroups-btn").on("click", onFillWorkgroups);
+  $("#refresh-workgroups-btn").on("click", onFillWorkgroups);
   $("#show-jwt-input-btn").on("click", onGetJwtokenDialog);
-  $("#start-baselining-btn").on("click", onSetupBaselining);
+  $("#back-btn").on("click", onShowMainPage);
+  $("#mapping-form-btn").on("click", onSubmitMappingForm);
 }
 
 function setUiForLogin() {
   $("#sideload-msg").hide();
   $("#login-ui").show();
   $("#work-ui").hide();
+  $("#workgroup-ui").hide();
   $("#app-body").show();
 }
 
@@ -88,8 +94,21 @@ function setUiAfterLogin() {
   $("#user-name", $workUi).text(userName);
   $("#login-ui").hide();
   $workUi.show();
+  $("#workgroup-ui").hide();
   $("#app-body").show();
 }
+
+function setUiForWorkgroups() {
+  $("#sideload-msg").hide();
+  $("#login-ui").hide();
+  let $workUi = $("#work-ui");
+  const userName = (identClient.user || {}).name || "unknow";
+  $("#user-name", $workUi).text(userName);
+  $("#work-ui").hide();
+  $("#workgroup-ui").show();
+  $("#app-body").show();
+}
+
 
 function onLogin(): Promise<void> {
   const $form = $("#login-ui form");
@@ -114,7 +133,7 @@ function onLogin(): Promise<void> {
 
       return session.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
-    .then(fillMyWorkgroupSheet)
+    .then(getMyWorkgroups)
     .then(startBaselining);
 }
 
@@ -137,7 +156,21 @@ function onLogout() {
 }
 
 function onFillWorkgroups(): Promise<unknown> {
-  return fillMyWorkgroupSheet();
+  return getMyWorkgroups();
+}
+
+function onShowMainPage() {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
+  setUiAfterLogin();
+
+  const token: TokenStr = identClient.userRefreshToken;
+  const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
+
+  return session.setTokenAndUser(token, user).then(spinnerOff).then(getMyWorkgroups, onError);
 }
 
 function onGetJwtokenDialog() {
@@ -157,16 +190,49 @@ function onGetJwtokenDialog() {
   );
 }
 
-function fillMyWorkgroupSheet(): Promise<void> {
+function getMyWorkgroups(): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
   }
 
   spinnerOn();
-  return identClient.getWorkgroups().then((apps) => {
-    return excelWorker.showWorkgroups("My Workgroups", apps, true).then(spinnerOff);
+  return identClient.getWorkgroups().then(async (apps) => {
+    await excelWorker.showWorkgroups("My Workgroups", apps);
+    return await activateWorkgroupButtons(apps).then(spinnerOff);
   }, onError);
+}
+
+async function activateWorkgroupButtons(applications: Application[]) : Promise<void>{
+  applications.map((app) => {
+   //Get the buttons elents
+   $("#" + app.id).on("click", function () {
+     confirmMappings(app.id);
+   });
+   //Add Events to it
+    
+  });
+}
+
+
+async function confirmMappings(appId: string): Promise<void>{
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+  
+  setUiForWorkgroups();
+  //await mappingForm.showUnmappedColumns(appId);
+ return identClient.getWorkgroupMappings(appId).then(async (mappings) => { 
+    if(mappings && mappings.length){
+      return await mappingForm.showWorkgroupMappings(mappings); 
+    } 
+    return await mappingForm.showUnmappedColumns(appId);
+  }, onError);
+}
+
+async function onSubmitMappingForm(): Promise<unknown> {
+  return initializeBaselining(mappingForm);
 }
 
 function startBaselining(): Promise<void> {
@@ -177,16 +243,12 @@ function startBaselining(): Promise<void> {
   return excelWorker.startBaselineService(identClient);
 }
 
-function onSetupBaselining(): Promise<unknown> {
-  return initializeBaselining();
-}
-
-function initializeBaselining(): Promise<unknown> {
+async function initializeBaselining(mappingForm: MappingForm): Promise<unknown> {
   if(!identClient) {
     setUiForLogin();
     return;
   }
 
   spinnerOn();
-  return excelWorker.createInitialSetup().then(spinnerOff, onError);
+  return excelWorker.createInitialSetup(mappingForm).then(spinnerOff, onError);
 }

@@ -49,3 +49,30 @@ body {
   margin-left: -1.5rem;
   margin-top: -1.5rem;
 }
+
+#workgroup-ui {
+  -webkit-transition:all 1.0s ease-in-out;
+  -moz-transition:all 1.0s ease-in-out;
+  -o-transition:all 1.0s ease-in-out;
+  transition:all 1.0s ease-in-out;
+}
+
+#workgroups-list {
+  font-size: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+#show-jwt-input-btn {
+  margin-top: 1rem;
+}
+
+#start-baselining-btn {
+  margin-top: 1rem;
+}
+
+.list-group-item {
+  background-color: #d9d9d9;
+  padding: 0.5rem;
+}
+

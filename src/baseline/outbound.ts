@@ -1,5 +1,5 @@
 import { onError } from "../common/common";
-import { BusinessObject, BaselineResponse } from "@provide/types";
+import { Object, BaselineResponse } from "@provide/types";
 import { ProvideClient } from "src/client/provide-client";
 import { indexedDatabase } from "../settings/settings";
 
@@ -15,7 +15,7 @@ export class OutBound {
         console.log(JSON.stringify(message));
         let baselineResponse: BaselineResponse;
   
-        let recordExists = await indexedDatabase.recordExists(tableName, [message.payload.id, message.type]);
+        let recordExists = await indexedDatabase.keyExists(tableName, [message.payload.id, message.type], "Out");
        
         console.log(recordExists);
   
@@ -35,15 +35,14 @@ export class OutBound {
     }
   }
 
-  private async createMessage(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs): Promise<BusinessObject> {
+  private async createMessage(context: Excel.RequestContext, changedData: Excel.TableChangedEventArgs): Promise<Object> {
     let tableName = await this.getTableName(context);
     let primaryKey = await indexedDatabase.getPrimaryKeyField(tableName); 
     let id = await this.getPrimaryKey(context, changedData, primaryKey);
     let dataColumnHeader = await this.getDataColumnHeader(context, changedData);
    
 
-    let message: BusinessObject = {} as BusinessObject;
-    message.id = id;
+    let message: Object = {} as Object;
     message.type = "general_consistency";
 
     const data = {};

@@ -6,7 +6,8 @@ import {
   Wallet,
   Vault as ProvideVault,
   BaselineResponse,
-  BusinessObject,
+  Object,
+  Mapping
 } from "@provide/types";
 import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory, baselineClientFactory } from "provide-js";
 import { Uuid, TokenStr } from "../models/common";
@@ -32,13 +33,19 @@ export interface ProvideClient {
   connectNatsClient(): Promise<void>;
 
   // eslint-disable-next-line no-unused-vars
-  sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse>;
+  sendCreateProtocolMessage(message: Object): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
-  sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse>;
+  sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
   acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void>;
+
+  // eslint-disable-next-line no-unused-vars
+  getWorkgroupMappings(appId: string): Promise<Mapping[]>;
+
+  // eslint-disable-next-line no-unused-vars
+  createWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -47,7 +54,7 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
-  private HOST = "9a9190723237.ngrok.io";
+  private host = "localhost:445";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -107,36 +114,59 @@ class ProvideClientImpl implements ProvideClient {
   async getWorkgroups(): Promise<Application[]> {
     const retVal = await this._userAuthContext.get((accessToken) => {
       const identService = identClientFactory(accessToken);
+      //TODO: Change to baselineSerive.fetchWorkgroups()
       return identService.fetchApplications({});
     });
-    return retVal;
+    return retVal.results;
   }
 
-  async sendCreateProtocolMessage(message: BusinessObject): Promise<BaselineResponse> {
-    var orgID = await this.getOrgID();
-    await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.HOST);
-      return baselineService.createBusinessObject(message);
+  async getWorkgroupMappings(appId: string): Promise<Mapping[]> {
+    const retVal = await this._userAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken);
+      return baselineService.fetchWorkgroupMappings(appId, {});
     });
     return retVal;
   }
 
-  async sendUpdateProtocolMessage(baselineID: string, message: BusinessObject): Promise<BaselineResponse> {
+  async updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
+    await this._userAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken);
+      return baselineService.updateWorkgroupMapping(appId, mappingId, params);
+    }); 
+  }
+
+  async createWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
+    await this._userAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken);
+      return baselineService.createWorkgroupMapping(appId, mappingId, params);
+    }); 
+  }
+
+  async sendCreateProtocolMessage(message: Object): Promise<BaselineResponse> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.HOST);
-      return baselineService.updateBusinessObject(baselineID, message);
+      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      return baselineService.createObject(message);
+    });
+    return retVal;
+  }
+
+  async sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse> {
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    const retVal = await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      return baselineService.updateObject(baselineID, message);
     });
     return retVal;
   }
 
   async connectNatsClient(): Promise<void> {
+   
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     await this._orgAuthContext.get(async (accessToken) => {
-     
       this._NatsClient = new NatsClient(accessToken);
       return await this._NatsClient.connect();
 
@@ -145,12 +175,11 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   private async getOrgID(): Promise<string> {
-    
-    const organization = await this._userAuthContext.get((accessToken) => {
+    const organization = await this._userAuthContext.get(async (accessToken) => {
       const identService = identClientFactory(accessToken);
-      return identService.fetchOrganizations({});
+      return await identService.fetchOrganizations({});
     });
-    return organization[0].id;
+    return organization.results[0].id;
   }
 
   async createWallet(): Promise<Wallet> {
@@ -186,7 +215,7 @@ class ProvideClientImpl implements ProvideClient {
       };
       return vaultService.fetchVaults(params);
     });
-    return retVal;
+    return retVal.results;
   }
 
   async createVault(organizationId: Uuid): Promise<ProvideVault> {
@@ -224,7 +253,7 @@ class ProvideClientImpl implements ProvideClient {
       };
       return vaultService.fetchVaultKeys(vaultId, params);
     });
-    return retVal;
+    return retVal.results;
   }
 
   async createVaultKey(vaultId: Uuid, spec: string, organizationId: Uuid): Promise<Key> {
@@ -254,7 +283,7 @@ class ProvideClientImpl implements ProvideClient {
       };
       return nchainService.fetchContracts(params);
     });
-    return retVal;
+    return retVal.results;
   }
 
   async getOrCreateApplicationOrganization(
@@ -320,7 +349,7 @@ class ProvideClientImpl implements ProvideClient {
       };
       return identService.fetchApplicationOrganizations(workgroupAndApplicationId, params);
     });
-    return retVal;
+    return retVal.results;
   }
 
   async acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void> {

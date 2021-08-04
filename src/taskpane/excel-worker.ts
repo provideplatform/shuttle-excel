@@ -1,58 +1,32 @@
 // NOTE: Logic of working with Excel
 
-import { Application } from "@provide/types";
+import { Application} from "@provide/types";
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
+import { MappingForm } from "./mappingForm";
 
+
+// eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension */
 
 export class ExcelWorker {
-  showWorkgroups(sheetName: string, applications: Application[], active: boolean = false): Promise<unknown> {
-    return Excel.run((context: Excel.RequestContext) => {
-      var sheets = context.workbook.worksheets;
-      sheets.load("items/name");
 
-      return context.sync().then(() => {
-        let sheet: Excel.Worksheet = sheets.items.find((x) => x.name === sheetName);
-        if (!sheet) {
-          //sheet = sheets.add(sheetName);
-        }
+  identClient: ProvideClient | null;
 
-        //this.renderWorkgroups(sheet, applications);
-        //Removed functionality
-
-        if (active) {
-          //sheet.activate();
-        }
-
-        return context.sync();
-      });
-    }).catch(this.catchError);
-  }
-
-  private renderWorkgroups(sheet: Excel.Worksheet, applications: Application[]): void {
-    let workgroupsTable: Excel.Table = sheet.tables.getItemOrNullObject("Workgroups");
-    if (workgroupsTable) {
-      workgroupsTable.delete();
-    }
-
-    workgroupsTable = sheet.tables.add("A1:F1", true /* hasHeaders */);
-    workgroupsTable.name = "Workgroups";
-
-    workgroupsTable.getHeaderRowRange().values = [["NetworkId", "UserId", "Name", "Description", "Type", "Hidden"]];
-    const asRows = applications.map((app) => {
-      return [app.networkId, app.userId, app.name, app.description, app.type, app.hidden];
+  async showWorkgroups(sheetName: string, applications: Application[]): Promise<void> {
+    var completelist= document.getElementById("workgroups-list");
+    completelist.innerHTML = "";
+    
+     
+    applications.map((app) => {
+      completelist.innerHTML += `<button type="button" class="list-group-item list-group-item-action" id="` + app.id + `">` + app.name + `</button>`;
     });
-    workgroupsTable.rows.add(null /* add at the end */, asRows);
-
-    // expensesTable.columns.getItemAt(3).getRange().numberFormat = [['\u20AC#,##0.00']];
-    workgroupsTable.getRange().format.autofitColumns();
-    workgroupsTable.getRange().format.autofitRows();
+    
   }
 
-  createInitialSetup(): Promise<unknown> {
-    return baseline.createTableListeners();
+  async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {
+    return baseline.createTableMappings(mappingForm);
   }
 
   startBaselineService(identClient: ProvideClient): Promise<void> {

@@ -1,6 +1,5 @@
 import { onError } from "../common/common";
 import { indexedDatabase } from "../settings/settings";
-import { Record } from "../models/record";
 
 //TODO
 import { ProtocolMessage } from "../models/protocolMessage";
@@ -9,48 +8,47 @@ import { ProtocolMessage } from "../models/protocolMessage";
 /* global Excel, Office, OfficeExtension */
 
 export class InBound {
-  tableID: string;
 
-  handler(msg: ProtocolMessage) {
-    Excel.run((context: Excel.RequestContext) => {
-      this.updateExcelTable(context, msg);
-      return context.sync();
-    }).catch(this.catchError);
-  }
-
-  private async updateExcelTable(context: Excel.RequestContext, msg: ProtocolMessage): Promise<void> {
- 
+  async updateExcelTable(context: Excel.RequestContext, msg: ProtocolMessage): Promise<void> {
     //Disable event handler
     await this.disableTableListener(context);
 
-    var tableName = await this.getTableName(context); 
+    var tableName = await this.getTableName(context);
     var primaryKeyColumn = await indexedDatabase.getPrimaryKeyField(tableName);
+    //dataColumn - Can be retrieved from the message received or from my own indexed database
     var dataColumn = Object.keys(msg.payload.data)[0];
-    var address = await this.getDataCellAddress(context, msg.id, dataColumn , primaryKeyColumn);
+    var address;
+    var id;
 
-    var range = context.workbook.worksheets.getActiveWorksheet().getRange(address);
+    var idExists = await indexedDatabase.keyExists(tableName, msg.baselineID, "In");
+
+    if (!idExists) {
+      id = await this.generateNewPrimaryKeyID(context, primaryKeyColumn);
+
+      //map it with baseline ID given in the message\
+      //Set baselineID in table
+      await indexedDatabase.setInboundTable(tableName, msg.baselineID, [id, dataColumn]);
+
+      //Add record in table
+      await this.addNewIDToTable(context, id, primaryKeyColumn);
+      address = await this.getDataCellAddress(context, id, dataColumn, primaryKeyColumn);
+
+    } else {
+      id = (await indexedDatabase.getKey(tableName, msg.baselineID))[0];
+      address = await this.getDataCellAddress(context, id, dataColumn, primaryKeyColumn);
+    } 
     
+    var range = context.workbook.worksheets.getActiveWorksheet().getRange(address);
+
     range.values = [[msg.payload.data[dataColumn]]];
     range.format.autofitColumns();
     range.format.fill.color = "yellow";
     range.format.font.bold = true;
+
     await context.sync();
 
     //Enable event handler
     await this.enableTableListener(context);
-  }
-
-  private async getPrimaryKeyRecord(context: Excel.RequestContext, msg: ProtocolMessage): Promise<Record> {
-    let sheet = context.workbook.worksheets.getActiveWorksheet();
-    let range = sheet.getUsedRange();
-    let table = range.getTables().getFirst();
-    table.load("id");
-
-    await context.sync();
-
-    this.tableID = table.id;
-    var record: Record = await indexedDatabase.getKey(table.id, msg.baselineID);
-    return record;
   }
 
   private async getDataCellAddress(context: Excel.RequestContext, primaryKeyValue: string, columnName: string, primaryKeyColumn: string): Promise<string> {
@@ -84,6 +82,38 @@ export class InBound {
     await context.sync();
 
     return table.name; 
+  }
+
+  private async generateNewPrimaryKeyID(context: Excel.RequestContext, primaryKeyColumn: string): Promise<string> {
+    
+    //Get value in last cell
+    let primaryKeyRange = context.workbook.worksheets
+      .getActiveWorksheet()
+      .getRange(primaryKeyColumn + ":" + primaryKeyColumn).getUsedRange();
+    let lastCell = primaryKeyRange.getLastCell();
+    lastCell.load("values");
+
+    await context.sync();
+
+    //Increment that value
+    var id = parseInt(lastCell.values[0][0]); 
+    var newID = id+1;
+    
+    return newID.toString();
+  }
+
+  private async addNewIDToTable(context: Excel.RequestContext, newID: string, primaryKeyColumn: string): Promise<void>{
+
+    let originalRange = context.workbook.worksheets
+      .getActiveWorksheet()
+      .getRange(primaryKeyColumn + ":" + primaryKeyColumn)
+      .getUsedRange();
+    let expandedRange = originalRange.getResizedRange(1, 0);
+    expandedRange.copyFrom(originalRange, Excel.RangeCopyType.formats);
+    let lastCell = expandedRange.getLastCell();
+    lastCell.values = [[newID]];
+    lastCell.format.autofitRows();
+    await context.sync();
   }
 
   private async disableTableListener(context: Excel.RequestContext): Promise<void> {
