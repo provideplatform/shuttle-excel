@@ -90,18 +90,29 @@ export class ExcelAPI {
 
     //Map table name with mapping ID
     var excelTable = $("#" + tableName).val();
-    await indexedDatabase.setTableName(tableName, excelTable.toString());
+   
+    var tableExists = await indexedDatabase.tableExists(excelTable.toString());
+    
+    if(!tableExists){
+      await indexedDatabase.closeDB();
+      await indexedDatabase.createObjectStore(excelTable.toString());
+    }
+
+    await indexedDatabase.setTableName(tableName, excelTable.toString()); 
   
     var excelTablePrimaryKey = $("#" + primaryKey).val();
     await indexedDatabase.setPrimaryKey(excelTable.toString(), excelTablePrimaryKey.toString());
-    
+
     columnNames.map(async (column) => {
 
       var columnID = await this.trim(column.toString());
 
-      var excelColumn = $("#" + columnID).val();	
+      var excelColumn = $("#" + columnID).val();
+
       await indexedDatabase.setColumnMapping(tableName, column.toString(), excelColumn.toString());
+      
     })
+
     }
   
   async createMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void>{

@@ -35,17 +35,20 @@ export class MappingForm {
 			var tableID = await this.trim(model.type);
 			var primaryKeyID = await this.trim(model.primaryKey);
 
-			document.getElementById("mapping-form-header").innerHTML = "Confirm Mappings"
+			document.getElementById("mapping-form-header").innerHTML = "Confirm Mappings";
+			var pkOptions = await this.addOptions(excelColumnNames, model.primaryKey) ; 
 			mappingForm.innerHTML = `<div class="form-group">
-						<label for="` + tableID + `"> Table Name:` + model.type + `</label>
-						<input id="` + tableID + `" type="text" value="` + excelTableName + `" class="form-control bg-transparent text-light shadow-none" disabled\\>
+						<label class="font-weight-normal h6" for="` + tableID + `">Table Name: ` + model.type + `</label>
+						<input id="` + tableID + `" type="text" value="` + excelTableName + `" class="form-control bg-transparent text-light shadow-none"\\>
 						</div>
-						<div class="form-group">
-						<label for="` + primaryKeyID + `"> Primary Key Column:` + model.primaryKey + `)</label>
+						<div class="form-group">	
+						<label class="font-weight-normal h6" for="` + primaryKeyID + `">Primary Key Column: ` + model.primaryKey + `</label>
 						<select id="` + primaryKeyID + `" class="form-control bg-transparent text-light shadow-none">`
-						+ await this.addOptions(excelColumnNames, model.primaryKey)  +	
+						+ pkOptions +	
 						`</select>
-						</div>`
+						</div>`;
+			
+			this.columnNames = [];
 						
 			model.fields.map(async (field) => {
 			//field.name
@@ -56,7 +59,7 @@ export class MappingForm {
 			var options = await this.addOptions(excelColumnNames, field.name); 
 			mappingForm.innerHTML += `<div class="form-group container">
 						<div class="row">
-						<label class="col" for="` + columnID + `"> Column:` + field.name + ` (` + field.type + `)</label>
+						<label class="col font-weight-normal h6" for="` + columnID + `">` + field.name + `<div class="text-muted font-weight-light">(` + field.type + `)</div></label>
 						<select id="` + columnID + `" class="col form-control bg-transparent text-light shadow-none">`
 						+ options +	
 						`</select>
@@ -89,7 +92,7 @@ export class MappingForm {
 
 		
 	var mappingForm = document.getElementById("mapping-form-options");
-	document.getElementById("mapping-form-header").innerHTML = "Create New Mappings"
+	document.getElementById("mapping-form-header").innerHTML = "Create New Mapping"
 
 	var pkOptions = await this.addOptions(this.columnNames); 
 	mappingForm.innerHTML = `<div class="form-group container">
@@ -109,7 +112,7 @@ export class MappingForm {
 
 	this.columnNames.map(async (column) => {
 		var columnID = await this.trim(column.toString());
-		var options = await this.addOptions(["String", "Number", "Boolean"]);
+		var options = await this.addOptions(["String", "Number", "Boolean", "Date"]);
 		mappingForm.innerHTML += `<div class="form-group container float-right">
 					<div class="row">
 					<label class="col d-flex justify-content-end" for="` + columnID + `">` + column + `</label>

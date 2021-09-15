@@ -59,9 +59,10 @@ export class InBound {
     headerCell.load("address");
 
     //Get Primary Key Cell
+    let columnAddress = await this.getColumnAddress(context, primaryKeyColumn);
     let primaryKeyRange = context.workbook.worksheets
       .getActiveWorksheet()
-      .getRange(primaryKeyColumn + ":" + primaryKeyColumn);
+      .getRange(columnAddress + ":" + columnAddress);
     let primaryKeyCell = primaryKeyRange.findOrNullObject(primaryKeyValue, { completeMatch: true });
     primaryKeyCell.load("address");
 
@@ -72,6 +73,20 @@ export class InBound {
       return column + row;
     });
   }
+
+  private async getColumnAddress(context: Excel.RequestContext, column: string): Promise<string> {
+    //Get column Header Cell
+    let table = context.workbook.worksheets.getActiveWorksheet().getUsedRange().getTables().getFirst();
+    let headerRange = table.getHeaderRowRange();
+    let headerCell = headerRange.findOrNullObject(column, { completeMatch: true });
+    headerCell.load("address");
+ 
+    await context.sync();
+ 
+    var headerCellAddress = headerCell.address.split("!")[1];
+    var columnAddress = headerCellAddress.split(/\d+/)[0];
+    return columnAddress;
+   }
 
   private async getTableName(context: Excel.RequestContext): Promise<string> {
     let sheet = context.workbook.worksheets.getActiveWorksheet();

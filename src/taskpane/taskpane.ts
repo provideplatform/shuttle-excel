@@ -1,6 +1,6 @@
 import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
 // eslint-disable-next-line no-unused-vars
-import { Application, Mapping } from "@provide/types";
+import { Application, Mapping, MappingField, MappingModel } from "@provide/types";
 import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
@@ -222,13 +222,36 @@ async function confirmMappings(appId: string): Promise<void>{
   }
   
   setUiForWorkgroups();
-  //await mappingForm.showUnmappedColumns(appId);
- return identClient.getWorkgroupMappings(appId).then(async (mappings) => { 
+
+  console.log("here");
+
+  
+
+  var a = <MappingField> {name: "Primary Key", type: "Date"};
+  var b = <MappingField> {name: "OrderDate", type: "Date"};
+  var c = <MappingField> {name: "Region", type: "Date"};
+  var d = <MappingField> {name: "Rep", type: "Date"};
+  var e = <MappingField> {name: "Item", type: "Date"};
+  var f = <MappingField> {name: "Units", type: "Date"};
+  var g = <MappingField> {name: "Unit Cost", type: "Date"};
+  var h = <MappingField> {name: "Total", type: "Date"};
+
+  var mapFields = [a,b,c,d,e,f,g,h];
+
+  var modelMap = <MappingModel> {fields: mapFields, primaryKey: "Total", type: "SalesOrderFinal"};
+
+  var colMap = <Mapping> {models: [modelMap], type:""};
+
+  //await mappingForm.showWorkgroupMappings([colMap]);
+  await mappingForm.showUnmappedColumns(appId); 
+  
+ // await mappingForm.showUnmappedColumns(appId);
+ /*return identClient.getWorkgroupMappings(appId).then(async (mappings) => { 
     if(mappings && mappings.length){
       return await mappingForm.showWorkgroupMappings(mappings); 
     } 
     return await mappingForm.showUnmappedColumns(appId);
-  }, onError);
+  }, onError);*/
 }
 
 async function onSubmitMappingForm(): Promise<unknown> {

@@ -109,7 +109,6 @@ class IndexedDBSettings {
      
       //on upgrade needed, create object store
       request.onupgradeneeded = async (e) => {
-        console.log("On upgrade");
         this.db = (<IDBOpenDBRequest>e.target).result;
         await this.db.createObjectStore(tableName+"Out", { keyPath: ["primaryKey", "columnName"] });
         await this.db.createObjectStore(tableName+"In", { keyPath: "baselineID" });
@@ -118,7 +117,6 @@ class IndexedDBSettings {
 
       //on success
       request.onsuccess = (e) => {
-        console.log("on Success");
         this.db = (<IDBOpenDBRequest>e.target).result;
         this.version = this.db.version;
         resolve(); 
@@ -142,7 +140,7 @@ class IndexedDBSettings {
     try {
       //Open database
       //ONLY FOR TESTS
-      await indexedDB.deleteDatabase(this.database);
+      //await indexedDB.deleteDatabase(this.database);
       var request = indexedDB.open(this.database);
       
       //on upgrade needed, create object store
@@ -181,7 +179,6 @@ class IndexedDBSettings {
     return new Promise((resolve, reject) => {
 
       try{
-        console.log("closed");
         this.db.close();
         resolve();
       } catch {
