@@ -6,9 +6,7 @@ import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
 import { mappingForm, MappingForm } from "./mappingForm";
-//import { unmapped } from "./unmapped";
 import { sessionSettings as session } from "../settings/settings";
-//import { diskStorage } from "../settings/settings";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
@@ -33,7 +31,6 @@ const stubAuth = false;
 /* global Excel, OfficeExtension, Office */
 
 let identClient: ProvideClient | null;
-//let mappingForm: MappingForm;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
@@ -109,7 +106,6 @@ function setUiForWorkgroups() {
   $("#app-body").show();
 }
 
-
 function onLogin(): Promise<void> {
   const $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
@@ -131,6 +127,8 @@ function onLogin(): Promise<void> {
       const token: TokenStr = identClient.userRefreshToken;
       const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
+      //TO SECURE --> Create safe storage
+      //file.setTokenAndUser(token, user);
       return session.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
     .then(getMyWorkgroups)
@@ -203,55 +201,30 @@ function getMyWorkgroups(): Promise<void> {
   }, onError);
 }
 
-async function activateWorkgroupButtons(applications: Application[]) : Promise<void>{
+async function activateWorkgroupButtons(applications: Application[]): Promise<void> {
   applications.map((app) => {
-   //Get the buttons elents
-   $("#" + app.id).on("click", function () {
-     confirmMappings(app.id);
-   });
-   //Add Events to it
-    
+    //Get the buttons elements
+    $("#" + app.id).on("click", function () {
+      confirmMappings(app.id);
+    });
+    //Add Events to it
   });
 }
 
-
-async function confirmMappings(appId: string): Promise<void>{
+async function confirmMappings(appId: string): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
   }
-  
+
   setUiForWorkgroups();
 
-  console.log("here");
-
-  
-
-  var a = <MappingField> {name: "Primary Key", type: "Date"};
-  var b = <MappingField> {name: "OrderDate", type: "Date"};
-  var c = <MappingField> {name: "Region", type: "Date"};
-  var d = <MappingField> {name: "Rep", type: "Date"};
-  var e = <MappingField> {name: "Item", type: "Date"};
-  var f = <MappingField> {name: "Units", type: "Date"};
-  var g = <MappingField> {name: "Unit Cost", type: "Date"};
-  var h = <MappingField> {name: "Total", type: "Date"};
-
-  var mapFields = [a,b,c,d,e,f,g,h];
-
-  var modelMap = <MappingModel> {fields: mapFields, primaryKey: "Total", type: "SalesOrderFinal"};
-
-  var colMap = <Mapping> {models: [modelMap], type:""};
-
-  //await mappingForm.showWorkgroupMappings([colMap]);
-  await mappingForm.showUnmappedColumns(appId); 
-  
- // await mappingForm.showUnmappedColumns(appId);
- /*return identClient.getWorkgroupMappings(appId).then(async (mappings) => { 
-    if(mappings && mappings.length){
-      return await mappingForm.showWorkgroupMappings(mappings); 
-    } 
+  return identClient.getWorkgroupMappings(appId).then(async (mappings) => {
+    if (mappings && mappings.length) {
+      return await mappingForm.showWorkgroupMappings(mappings);
+    }
     return await mappingForm.showUnmappedColumns(appId);
-  }, onError);*/
+  }, onError);
 }
 
 async function onSubmitMappingForm(): Promise<unknown> {
@@ -267,7 +240,7 @@ function startBaselining(): Promise<void> {
 }
 
 async function initializeBaselining(mappingForm: MappingForm): Promise<unknown> {
-  if(!identClient) {
+  if (!identClient) {
     setUiForLogin();
     return;
   }

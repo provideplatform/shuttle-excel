@@ -14,6 +14,12 @@ export class LoginFormData implements AuthParams {
   }
 
   isValid(): boolean | string {
+    //TO SECURE
+    //var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    //if(inputText.value.match(mailformat))
+
+    //var passw=  /^[A-Za-z]\w{7,14}$/; --> 8-15 characters \w = [A-Za-z0-9_]
+    //if(inputtxt.value.match(passw))
     if (this.email && this.password) {
       return true;
     } else {

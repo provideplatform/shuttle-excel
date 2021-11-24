@@ -7,7 +7,7 @@ import {
   Vault as ProvideVault,
   BaselineResponse,
   Object,
-  Mapping
+  Mapping,
 } from "@provide/types";
 import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory, baselineClientFactory } from "provide-js";
 import { Uuid, TokenStr } from "../models/common";
@@ -24,7 +24,6 @@ export interface ProvideClient {
   readonly user: User;
   readonly userRefreshToken: TokenStr;
   natsClient: NatsClient | null;
-
 
   logout(): Promise<void>;
 
@@ -54,7 +53,7 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
-  private host = "localhost:445";
+  private host = "0.pgrok.provide.services:45659";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -122,24 +121,24 @@ class ProvideClientImpl implements ProvideClient {
 
   async getWorkgroupMappings(appId: string): Promise<Mapping[]> {
     const retVal = await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken);
-      return baselineService.fetchWorkgroupMappings(appId, {});
+      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      return baselineService.fetchMappings({ workgroup_id: appId });
     });
     return retVal;
   }
 
   async updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
     await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken);
-      return baselineService.updateWorkgroupMapping(appId, mappingId, params);
-    }); 
+      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      return baselineService.updateMapping(mappingId, params);
+    });
   }
 
   async createWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
     await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken);
-      return baselineService.createWorkgroupMapping(appId, mappingId, params);
-    }); 
+      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      return baselineService.createMapping(mappingId, params);
+    });
   }
 
   async sendCreateProtocolMessage(message: Object): Promise<BaselineResponse> {
@@ -163,13 +162,11 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async connectNatsClient(): Promise<void> {
-   
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     await this._orgAuthContext.get(async (accessToken) => {
       this._NatsClient = new NatsClient(accessToken);
       return await this._NatsClient.connect();
-
     });
     return;
   }
@@ -435,8 +432,8 @@ export async function authenticate(authParams: AuthParams): Promise<ProvideClien
     authParams
   );
   const response = await Ident.authenticate(params);
-  let tokenResponse = (response.token as any) as _Token;
-  let userResponse = (response.user as any) as _User;
+  let tokenResponse = response.token as any as _Token;
+  let userResponse = response.user as any as _User;
   const user: User = userResponse as User;
   const userAccessToken = new AccessToken(tokenResponse.id, tokenResponse.access_token, tokenResponse.expires_in);
   const userAuthContext = new AuthContext(tokenResponse.refresh_token, userAccessToken);

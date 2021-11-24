@@ -17,5 +17,16 @@
           }
       ]
   ],
+  "plugins": [
+    [
+      "@babel/plugin-proposal-class-properties",
+      
+      {
+        "loose": true
+      }
+    ],
+    ["@babel/plugin-syntax-top-level-await"]
+  
+  ],
   "sourceType": "unambiguous"
 }

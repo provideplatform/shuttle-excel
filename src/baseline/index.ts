@@ -10,19 +10,16 @@ import { MappingForm } from "../taskpane/mappingForm";
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
 
-export class Baseline { 
-  
+export class Baseline {
   _identClient: ProvideClient;
   _natsClient: NatsClient;
-  
 
   //Initialize baseline
   async createTableMappings(mappingForm: MappingForm): Promise<unknown> {
     return await Excel.run(async (context: Excel.RequestContext) => {
       await excelAPI.createTableListener(context).then(async (tableName) => {
-
         var button = document.getElementById("mapping-form-btn").innerHTML;
-  
+
         if (button == "Create Mapping") {
           await excelAPI.createMappings(this._identClient, mappingForm, tableName);
         } else {
@@ -31,8 +28,7 @@ export class Baseline {
       });
       await context.sync();
       await excelAPI.changeButtonColor();
-    })
-    .catch(this.catchError); 
+    }).catch(this.catchError);
   }
 
   //Start the Baseline Service after login
@@ -44,7 +40,7 @@ export class Baseline {
       //Set Provide client for sending messages
       this._identClient = identClient;
 
-     /* var data = {};
+      /* var data = {};
       data["Region"] = "West";
 
       const test = {
@@ -60,7 +56,7 @@ export class Baseline {
        inboundMessage.updateExcelTable(context, test);
        return context.sync(); 
       })*/
-      
+
       //Connect to Nats for receiving messages
       if (!this._natsClient) {
         //PROBLEM
@@ -77,39 +73,34 @@ export class Baseline {
     } catch {
       this.catchError;
     }
-  } 
+  }
 
   sendMessage(changedData: Excel.TableChangedEventArgs): void {
-   
     Excel.run((context: Excel.RequestContext) => {
       outboundMessage.send(context, changedData, this._identClient);
-      return context.sync(); 
-    }).catch(this.catchError); 
-    
+      return context.sync();
+    }).catch(this.catchError);
   }
 
   receiveMessage(): void {
-   try {
-     this._natsClient.subscribe("baseline.>", (msg: ProtocolMessage) => {
-      Excel.run((context: Excel.RequestContext) => {
-        inboundMessage.updateExcelTable(context, msg);
-        return context.sync();
-      }).catch(this.catchError);
-     });
-           
-   } catch {
-     this.catchError;
-   }
+    try {
+      this._natsClient.subscribe("baseline.>", (msg: ProtocolMessage) => {
+        Excel.run((context: Excel.RequestContext) => {
+          inboundMessage.updateExcelTable(context, msg);
+          return context.sync();
+        }).catch(this.catchError);
+      });
+    } catch {
+      this.catchError;
+    }
   }
 
- private async activateTableListeners() : Promise<unknown> {
+  private async activateTableListeners(): Promise<unknown> {
     return Excel.run(async (context: Excel.RequestContext) => {
       await excelAPI.addTableListener(context);
       return context.sync();
     }).catch(this.catchError);
   }
-
-
 
   private catchError(error: any): void {
     console.log("Error: " + error);

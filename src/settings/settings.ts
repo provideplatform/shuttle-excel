@@ -5,7 +5,8 @@
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { Record } from "../models/record";
-//import { readFileSync, writeFileSync, unlinkSync, openSync } from "fs";
+//import { getOriginPrivateDirectory } from "native-file-system-adapter";
+//import cacheAdapter from "native-file-system-adapter/src/adapters/cache";
 
 export interface ISettingsStorage {
   // eslint-disable-next-line no-unused-vars
@@ -45,6 +46,46 @@ class DocumentSettings implements ISettingsStorage {
     return promise;
   }
 }
+
+// class FileSettings implements ISettingsStorage {
+//   private fileHandle;
+//   private dirHandle;
+
+//   private async createFile(): Promise<void> {
+//     console.log("create file");
+//     this.dirHandle = await getOriginPrivateDirectory(cacheAdapter);
+//     this.fileHandle = await this.dirHandle.getFileHandle("userInfo.txt", { create: true });
+//   }
+
+//   async set(key: string, value: any): Promise<void> {
+//     console.log("set key");
+//     if (!this.fileHandle) {
+//       await this.createFile();
+//     }
+
+//     const obj = { key: value };
+//     const blob = new Blob([JSON.stringify(obj)], { type: "text/plain" });
+
+//     var writer = this.fileHandle.createWritable();
+//     await writer.write(blob);
+//     await writer.close();
+//   }
+
+//   async get(key: string): Promise<any> {
+//     const file = await this.fileHandle.getFile();
+//     const contents = await file.text();
+//     const object = JSON.parse(contents);
+
+//     const value = object.userInfoObject[key];
+
+//     return Promise.resolve(value);
+//   }
+
+//   // eslint-disable-next-line no-unused-vars
+//   async remove(key: string): Promise<void> {
+//     await this.dirHandle.removeEntry("userInfo.txt");
+//   }
+// }
 
 abstract class StorageSettings implements ISettingsStorage {
   protected storage: Storage;
@@ -87,6 +128,7 @@ class SessionStorageSettings extends StorageSettings {
   }
 }
 
+//TO SECURE --> . https://www.icloud.com/iclouddrive/0pw1tr6bEg2LpkSPYJ5U1awVg#IETSS2014_0029_final-2
 class IndexedDBSettings {
   protected db: IDBDatabase;
   private database: string;
@@ -96,41 +138,39 @@ class IndexedDBSettings {
     this.database = database;
   }
   async createObjectStore(tableName: string): Promise<void> {
-    try { 
+    try {
       return new Promise((resolve, reject) => {
-      //Create or open the database
-      //await this.db.close();
-      this.version++;
-      var request = indexedDB.open(this.database, this.version);
+        //Create or open the database
+        //await this.db.close();
+        this.version++;
+        var request = indexedDB.open(this.database, this.version);
 
-      request.onblocked = (e) => {
-        console.log(e.target);
-      }
-     
-      //on upgrade needed, create object store
-      request.onupgradeneeded = async (e) => {
-        this.db = (<IDBOpenDBRequest>e.target).result;
-        await this.db.createObjectStore(tableName+"Out", { keyPath: ["primaryKey", "columnName"] });
-        await this.db.createObjectStore(tableName+"In", { keyPath: "baselineID" });
-        await this.db.createObjectStore(tableName, { keyPath: "columnName" });
+        request.onblocked = (e) => {
+          console.log(e.target);
         };
 
-      //on success
-      request.onsuccess = (e) => {
-        this.db = (<IDBOpenDBRequest>e.target).result;
-        this.version = this.db.version;
-        resolve(); 
-      };
+        //on upgrade needed, create object store
+        request.onupgradeneeded = async (e) => {
+          this.db = (<IDBOpenDBRequest>e.target).result;
+          await this.db.createObjectStore(tableName + "Out", { keyPath: ["primaryKey", "columnName"] });
+          await this.db.createObjectStore(tableName + "In", { keyPath: "baselineID" });
+          await this.db.createObjectStore(tableName, { keyPath: "columnName" });
+        };
 
-      //on error
-      request.onerror = (e) => {
-        console.log((<IDBOpenDBRequest>e.target).error);
-        reject();
-      };
+        //on success
+        request.onsuccess = (e) => {
+          this.db = (<IDBOpenDBRequest>e.target).result;
+          this.version = this.db.version;
+          resolve();
+        };
 
-    })
+        //on error
+        request.onerror = (e) => {
+          console.log((<IDBOpenDBRequest>e.target).error);
+          reject();
+        };
+      });
     } catch (e) {
-
       console.error(e.message);
       return;
     }
@@ -142,7 +182,7 @@ class IndexedDBSettings {
       //ONLY FOR TESTS
       //await indexedDB.deleteDatabase(this.database);
       var request = indexedDB.open(this.database);
-      
+
       //on upgrade needed, create object store
       request.onupgradeneeded = async (e) => {
         this.db = (<IDBOpenDBRequest>e.target).result;
@@ -164,12 +204,11 @@ class IndexedDBSettings {
         //on error
         request.onerror = (e) => {
           console.log((<IDBOpenDBRequest>e.target).error);
-          reject(request.error)
+          reject(request.error);
         };
       });
 
       return tableExists;
-      
     } catch (error) {
       return;
     }
@@ -177,15 +216,13 @@ class IndexedDBSettings {
 
   closeDB(): Promise<void> {
     return new Promise((resolve, reject) => {
-
-      try{
+      try {
         this.db.close();
         resolve();
       } catch {
         reject();
       }
-
-    })
+    });
   }
 
   async set(tableName: string, key: string[], value: string): Promise<void> {
@@ -199,8 +236,8 @@ class IndexedDBSettings {
       columnName: key[1],
       baselineID: value,
     };
-    const tx = this.db.transaction(tableName+"Out", "readwrite");
-    const store = tx.objectStore(tableName+"Out");
+    const tx = this.db.transaction(tableName + "Out", "readwrite");
+    const store = tx.objectStore(tableName + "Out");
     store.put(record);
   }
 
@@ -208,18 +245,18 @@ class IndexedDBSettings {
     const record: Record = {
       baselineID: key,
       primaryKey: value[0],
-      columnName: value[1], 
+      columnName: value[1],
     };
-    const tx = this.db.transaction(tableName+"In", "readwrite");
-    const store = tx.objectStore(tableName+"In");
+    const tx = this.db.transaction(tableName + "In", "readwrite");
+    const store = tx.objectStore(tableName + "In");
     store.put(record);
   }
 
   async setPrimaryKey(key: string, value: string): Promise<void> {
     const record = {
-      tableID : key,
-      primaryKey : value
-    }
+      tableID: key,
+      primaryKey: value,
+    };
     const tx = this.db.transaction("tablePrimaryKeys", "readwrite");
     const store = tx.objectStore("tablePrimaryKeys");
     store.put(record);
@@ -232,10 +269,10 @@ class IndexedDBSettings {
     };
     const tx = this.db.transaction(tableName, "readwrite");
     const store = tx.objectStore(tableName);
-    store.put(record); 
+    store.put(record);
   }
 
-  async getColumnMapping(tableName: string, key: string): Promise<string>{
+  async getColumnMapping(tableName: string, key: string): Promise<string> {
     var mapping: string = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName, "readonly");
       const store = tx.objectStore(tableName);
@@ -250,18 +287,17 @@ class IndexedDBSettings {
       };
     });
 
-    return mapping; 
+    return mapping;
   }
 
-  async setTableName(key: string, value: string): Promise<void>{
-    
+  async setTableName(key: string, value: string): Promise<void> {
     const record = {
       tableName: key,
       mappingTable: value,
     };
     const tx = this.db.transaction("tableNames", "readwrite");
     const store = tx.objectStore("tableNames");
-    store.put(record);  
+    store.put(record);
   }
 
   async getTableName(key: string): Promise<String> {
@@ -279,13 +315,13 @@ class IndexedDBSettings {
       };
     });
 
-    return mapping;  
+    return mapping;
   }
 
   async get(tableName: string, key: string[]): Promise<string> {
     var record: Record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction(tableName+"Out", "readonly");
-      const store = tx.objectStore(tableName+"Out");
+      const tx = this.db.transaction(tableName + "Out", "readonly");
+      const store = tx.objectStore(tableName + "Out");
       const request = store.get(key);
 
       request.onsuccess = () => {
@@ -302,8 +338,8 @@ class IndexedDBSettings {
 
   async getKey(tableName: string, key: string): Promise<any> {
     var record: Record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction(tableName+"In", "readonly");
-      const store = tx.objectStore(tableName+"In");
+      const tx = this.db.transaction(tableName + "In", "readonly");
+      const store = tx.objectStore(tableName + "In");
       const request = store.get(key);
 
       request.onsuccess = () => {
@@ -318,9 +354,9 @@ class IndexedDBSettings {
     return [record.primaryKey, record.columnName];
   }
 
-  async getPrimaryKeyField(key: string) : Promise<any> {
+  async getPrimaryKeyField(key: string): Promise<any> {
     var record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction("tablePrimaryKeys", "readonly"); 
+      const tx = this.db.transaction("tablePrimaryKeys", "readonly");
       const store = tx.objectStore("tablePrimaryKeys");
       const request = store.get(key);
 
@@ -333,22 +369,22 @@ class IndexedDBSettings {
         reject(request.error);
       };
     });
-  
-    return record["primaryKey"]; 
+
+    return record["primaryKey"];
   }
 
   async tableExists(tableName: string): Promise<boolean> {
-   return await this.keyExists("tableNames", tableName);
+    return await this.keyExists("tableNames", tableName);
   }
 
-  async keyExists(tableName: string, key: any, source?: string) : Promise<boolean> {
+  async keyExists(tableName: string, key: any, source?: string): Promise<boolean> {
     //Switch
-    switch(source){
+    switch (source) {
       case "In":
-        tableName = tableName+"In";
+        tableName = tableName + "In";
         break;
       case "Out":
-        tableName = tableName+"Out";
+        tableName = tableName + "Out";
         break;
       default:
         tableName;
@@ -356,11 +392,9 @@ class IndexedDBSettings {
     return await this.checkRecord(tableName, key);
   }
 
-  private async checkRecord(tableName: string, key?: any) : Promise<boolean> {
-  
+  private async checkRecord(tableName: string, key?: any): Promise<boolean> {
     var recordCount: number = await new Promise((resolve, reject) => {
-      
-      const tx = this.db.transaction(tableName, "readonly"); 
+      const tx = this.db.transaction(tableName, "readonly");
       const store = tx.objectStore(tableName);
       const request = store.count(key);
 
@@ -378,7 +412,6 @@ class IndexedDBSettings {
     } else {
       return false;
     }
-
   }
 
   async remove(tableName: string, key: string[]): Promise<void> {
@@ -399,6 +432,8 @@ const documentSettings: ISettingsStorage = new DocumentSettings();
 const localStorageSettings: ISettingsStorage = new LocalStorageSettings();
 
 const sessionStorageSettings: ISettingsStorage = new SessionStorageSettings();
+
+//const fileSettings: ISettingsStorage = new FileSettings();
 
 class Settings {
   private readonly NAME = "__docSettings";
@@ -429,7 +464,6 @@ class Settings {
 }
 
 class SessionSettings {
-
   async getRefreshToken(): Promise<TokenStr | null> {
     const value = await sessionStorageSettings.get("refreshToken");
     return (value as TokenStr) || null;
@@ -448,8 +482,33 @@ class SessionSettings {
   async removeTokenAndUser(): Promise<void> {
     await sessionStorageSettings.remove("refreshToken");
     await sessionStorageSettings.remove("user");
-  } 
+  }
 }
+
+// class FileStorageSettings {
+//   async getRefreshToken(): Promise<TokenStr | null> {
+//     const value = await fileSettings.get("refreshToken");
+//     return (value as TokenStr) || null;
+//   }
+
+//   async getUser(): Promise<User | null> {
+//     const value = await fileSettings.get("user");
+//     return (value as User) || null;
+//   }
+
+//   async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
+//     const userInfoObject = {
+//       refreshToken: token,
+//       user: user,
+//     };
+//     console.log("set user info");
+//     await fileSettings.set("userInfo", userInfoObject);
+//   }
+
+//   async removeTokenAndUser(): Promise<void> {
+//     await fileSettings.remove("userInfo");
+//   }
+// }
 
 /*class DiskStorageSettings {
 
@@ -505,4 +564,5 @@ class SessionSettings {
 export const settings = new Settings();
 export const indexedDatabase = new IndexedDBSettings("BaselineDB");
 export const sessionSettings = new SessionSettings();
-//export const diskStorage = new DiskStorageSettings(); 
+//export const diskStorage = new DiskStorageSettings();
+//export const fileStore = new FileStorageSettings();

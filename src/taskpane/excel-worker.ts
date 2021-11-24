@@ -1,28 +1,30 @@
 // NOTE: Logic of working with Excel
 
-import { Application} from "@provide/types";
+import { Application } from "@provide/types";
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
 import { MappingForm } from "./mappingForm";
 
-
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension */
 
 export class ExcelWorker {
-
   identClient: ProvideClient | null;
 
   async showWorkgroups(sheetName: string, applications: Application[]): Promise<void> {
-    var completelist= document.getElementById("workgroups-list");
+    var completelist = document.getElementById("workgroups-list");
     completelist.innerHTML = "";
-    
-     
+
     applications.map((app) => {
-      completelist.innerHTML += `<button type="button" class="list-group-item list-group-item-action" id="` + app.id + `">` + app.name + `</button>`;
+      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
+      completelist.innerHTML +=
+        `<button type="button" class="list-group-item list-group-item-action" id="` +
+        app.id +
+        `">` +
+        app.name +
+        `</button>`;
     });
-    
   }
 
   async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {

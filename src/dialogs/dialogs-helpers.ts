@@ -17,15 +17,15 @@ export function showPrimaryKeyDialog(data?: any): Promise<PrimaryKeyInputResult>
 }
 
 function getDialogUrl(dialogPage: string): string {
-    const currentPage = getCurrentPage();
-    const url = window.location.href.replace(currentPage, dialogPage);
-    return removeSearchPart(url);
+  const currentPage = getCurrentPage();
+  const url = window.location.href.replace(currentPage, dialogPage);
+  return removeSearchPart(url);
 }
 
 function removeSearchPart(url: string) {
-    return url.substr(0, url.length - window.location.search.length);
+  return url.substr(0, url.length - window.location.search.length);
 }
 
 function getCurrentPage(): string {
-    return window.location.pathname.substr(window.location.pathname.lastIndexOf("/") + 1);
+  return window.location.pathname.substr(window.location.pathname.lastIndexOf("/") + 1);
 }
