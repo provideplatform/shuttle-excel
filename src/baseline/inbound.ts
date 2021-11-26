@@ -1,5 +1,5 @@
 import { onError } from "../common/common";
-import { indexedDatabase } from "../settings/settings";
+import { store } from "../settings/store";
 import { excelHandler } from "./excel-handler";
 
 //TODO
@@ -15,14 +15,14 @@ export class InBound {
 
     var tableName = await excelHandler.getTableName(context);
 
-    var primaryKeyColumnName = await indexedDatabase.getPrimaryKeyField(tableName);
+    var primaryKeyColumnName = await store.getPrimaryKeyField(tableName);
     //dataColumn - Can be retrieved from the message received or from my own indexed database
     //TO SECURE --> Validate msg
     var dataColumn = Object.keys(msg.payload.data)[0];
     var address;
     var id;
 
-    var idExists = await indexedDatabase.keyExists(tableName, msg.baselineID, "In");
+    var idExists = await store.keyExists(tableName, msg.baselineID, "In");
     var primaryKeyColumnAddress = await excelHandler.getColumnAddress(context, primaryKeyColumnName);
     console.log(idExists);
 
@@ -31,7 +31,7 @@ export class InBound {
 
       //map it with baseline ID given in the message\
       //Set baselineID in table
-      await indexedDatabase.setInboundTable(tableName, msg.baselineID, [id, dataColumn]);
+      await store.setInboundTable(tableName, msg.baselineID, [id, dataColumn]);
 
       //Add record in table
       await this.addNewIDToTable(context, id, primaryKeyColumnAddress);
@@ -39,7 +39,7 @@ export class InBound {
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
       console.log(address);
     } else {
-      id = (await indexedDatabase.getKey(tableName, msg.baselineID))[0];
+      id = (await store.getPrimaryKeyId(tableName, msg.baselineID))[0];
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
       console.log(address);
     }

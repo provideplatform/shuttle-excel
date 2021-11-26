@@ -4,7 +4,7 @@
 
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
-import { Record } from "../models/record";
+
 //import { getOriginPrivateDirectory } from "native-file-system-adapter";
 //import cacheAdapter from "native-file-system-adapter/src/adapters/cache";
 
@@ -137,7 +137,7 @@ class IndexedDBSettings {
   constructor(database: string) {
     this.database = database;
   }
-  async createObjectStore(tableName: string): Promise<void> {
+  async createObjectStore(tableNames: string[], keyPath: any[]): Promise<void> {
     try {
       return new Promise((resolve, reject) => {
         //Create or open the database
@@ -152,9 +152,9 @@ class IndexedDBSettings {
         //on upgrade needed, create object store
         request.onupgradeneeded = async (e) => {
           this.db = (<IDBOpenDBRequest>e.target).result;
-          await this.db.createObjectStore(tableName + "Out", { keyPath: ["primaryKey", "columnName"] });
-          await this.db.createObjectStore(tableName + "In", { keyPath: "baselineID" });
-          await this.db.createObjectStore(tableName, { keyPath: "columnName" });
+          tableNames.map(async (tableName, i) => {
+            await this.db.createObjectStore(tableName, { keyPath: keyPath[i] });
+          });
         };
 
         //on success
@@ -176,7 +176,7 @@ class IndexedDBSettings {
     }
   }
 
-  async openDB(tableName: string): Promise<unknown> {
+  async open(): Promise<boolean> {
     try {
       //Open database
       //ONLY FOR TESTS
@@ -186,35 +186,36 @@ class IndexedDBSettings {
       //on upgrade needed, create object store
       request.onupgradeneeded = async (e) => {
         this.db = (<IDBOpenDBRequest>e.target).result;
+        await this.db.createObjectStore("userInfo", { keyPath: "keyName" });
         await this.db.createObjectStore("tablePrimaryKeys", { keyPath: "tableID" });
         await this.db.createObjectStore("tableNames", { keyPath: "tableName" });
         this.version = e.newVersion;
       };
 
-      var tableExists = await new Promise((resolve, reject) => {
+      var dbOpened: boolean = await new Promise((resolve, reject) => {
         //on success
         request.onsuccess = async (e) => {
           this.db = (<IDBOpenDBRequest>e.target).result;
-          var bool = await this.keyExists("tablePrimaryKeys", tableName);
+          var onSuccess = true;
           this.version = this.db.version;
           console.log("Database version: " + this.version);
-          resolve(bool);
+          resolve(onSuccess);
         };
 
         //on error
         request.onerror = (e) => {
           console.log((<IDBOpenDBRequest>e.target).error);
-          reject(request.error);
+          reject(false);
         };
       });
 
-      return tableExists;
+      return dbOpened;
     } catch (error) {
       return;
     }
   }
 
-  closeDB(): Promise<void> {
+  close(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
         this.db.close();
@@ -225,55 +226,14 @@ class IndexedDBSettings {
     });
   }
 
-  async set(tableName: string, key: string[], value: string): Promise<void> {
-    await this.setOutboundTable(tableName, key, value);
-    await this.setInboundTable(tableName, value, key);
-  }
-
-  async setOutboundTable(tableName: string, key: string[], value: string): Promise<void> {
-    const record: Record = {
-      primaryKey: key[0],
-      columnName: key[1],
-      baselineID: value,
-    };
-    const tx = this.db.transaction(tableName + "Out", "readwrite");
-    const store = tx.objectStore(tableName + "Out");
-    store.put(record);
-  }
-
-  async setInboundTable(tableName: string, key: string, value: string[]): Promise<void> {
-    const record: Record = {
-      baselineID: key,
-      primaryKey: value[0],
-      columnName: value[1],
-    };
-    const tx = this.db.transaction(tableName + "In", "readwrite");
-    const store = tx.objectStore(tableName + "In");
-    store.put(record);
-  }
-
-  async setPrimaryKey(key: string, value: string): Promise<void> {
-    const record = {
-      tableID: key,
-      primaryKey: value,
-    };
-    const tx = this.db.transaction("tablePrimaryKeys", "readwrite");
-    const store = tx.objectStore("tablePrimaryKeys");
-    store.put(record);
-  }
-
-  async setColumnMapping(tableName: string, key: string, value: string): Promise<void> {
-    const record = {
-      columnName: key,
-      mapping: value,
-    };
+  async set(tableName: string, record: any): Promise<void> {
     const tx = this.db.transaction(tableName, "readwrite");
     const store = tx.objectStore(tableName);
     store.put(record);
   }
 
-  async getColumnMapping(tableName: string, key: string): Promise<string> {
-    var mapping: string = await new Promise((resolve, reject) => {
+  async get(tableName: string, key: any): Promise<any> {
+    var record = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName, "readonly");
       const store = tx.objectStore(tableName);
       const request = store.get(key);
@@ -287,112 +247,10 @@ class IndexedDBSettings {
       };
     });
 
-    return mapping;
+    return record;
   }
 
-  async setTableName(key: string, value: string): Promise<void> {
-    const record = {
-      tableName: key,
-      mappingTable: value,
-    };
-    const tx = this.db.transaction("tableNames", "readwrite");
-    const store = tx.objectStore("tableNames");
-    store.put(record);
-  }
-
-  async getTableName(key: string): Promise<String> {
-    var mapping: string = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction("tableNames", "readonly");
-      const store = tx.objectStore("tableNames");
-      const request = store.get(key);
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
-
-    return mapping;
-  }
-
-  async get(tableName: string, key: string[]): Promise<string> {
-    var record: Record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction(tableName + "Out", "readonly");
-      const store = tx.objectStore(tableName + "Out");
-      const request = store.get(key);
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
-
-    return record.baselineID;
-  }
-
-  async getKey(tableName: string, key: string): Promise<any> {
-    var record: Record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction(tableName + "In", "readonly");
-      const store = tx.objectStore(tableName + "In");
-      const request = store.get(key);
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-
-      request.onerror = () => {
-        reject(request.error);
-      };
-    });
-
-    return [record.primaryKey, record.columnName];
-  }
-
-  async getPrimaryKeyField(key: string): Promise<any> {
-    var record = await new Promise((resolve, reject) => {
-      const tx = this.db.transaction("tablePrimaryKeys", "readonly");
-      const store = tx.objectStore("tablePrimaryKeys");
-      const request = store.get(key);
-
-      request.onsuccess = () => {
-        resolve(request.result);
-      };
-
-      request.onerror = () => {
-        console.log(request.error);
-        reject(request.error);
-      };
-    });
-
-    return record["primaryKey"];
-  }
-
-  async tableExists(tableName: string): Promise<boolean> {
-    return await this.keyExists("tableNames", tableName);
-  }
-
-  async keyExists(tableName: string, key: any, source?: string): Promise<boolean> {
-    //Switch
-    switch (source) {
-      case "In":
-        tableName = tableName + "In";
-        break;
-      case "Out":
-        tableName = tableName + "Out";
-        break;
-      default:
-        tableName;
-    }
-    return await this.checkRecord(tableName, key);
-  }
-
-  private async checkRecord(tableName: string, key?: any): Promise<boolean> {
+  async count(tableName: string, key?: any): Promise<number> {
     var recordCount: number = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName, "readonly");
       const store = tx.objectStore(tableName);
@@ -406,12 +264,7 @@ class IndexedDBSettings {
         reject(request.error);
       };
     });
-
-    if (recordCount > 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return recordCount;
   }
 
   async remove(tableName: string, key: string[]): Promise<void> {

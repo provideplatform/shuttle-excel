@@ -2,7 +2,7 @@ import { onError } from "../common/common";
 import { Mapping, MappingModel, MappingField } from "@provide/types";
 import { baseline } from "./index";
 import { showPrimaryKeyDialog } from "../dialogs/dialogs-helpers";
-import { indexedDatabase } from "../settings/settings";
+import { store } from "../settings/store";
 import { ProvideClient } from "src/client/provide-client";
 import * as $ from "jquery";
 import { MappingForm } from "src/taskpane/mappingForm";
@@ -53,7 +53,7 @@ export class ExcelAPI {
 
       await context.sync();
 
-      var tableExists = await indexedDatabase.openDB(table.name);
+      var tableExists = await store.openDB(table.name);
 
       if (tableExists) {
         table.onChanged.add(this.onChange);
@@ -76,7 +76,7 @@ export class ExcelAPI {
       }
     );
 
-    await indexedDatabase.setPrimaryKey(tableID, primaryKeyColumn);
+    await store.setPrimaryKey(tableID, primaryKeyColumn);
     return primaryKeyColumn;
   }
 
@@ -88,31 +88,31 @@ export class ExcelAPI {
     //Map table name with mapping ID
     var excelTable = $("#" + tableName).val();
 
-    var tableExists = await indexedDatabase.tableExists(excelTable.toString());
+    var tableExists = await store.tableExists(excelTable.toString());
 
     if (!tableExists) {
-      await indexedDatabase.closeDB();
-      await indexedDatabase.createObjectStore(excelTable.toString());
+      await store.close();
+      await store.createInboundAndOutboundTables(excelTable.toString());
     }
 
-    await indexedDatabase.setTableName(tableName, excelTable.toString());
+    await store.setTableName(tableName, excelTable.toString());
 
     var excelTablePrimaryKey = $("#" + primaryKey).val();
-    await indexedDatabase.setPrimaryKey(excelTable.toString(), excelTablePrimaryKey.toString());
+    await store.setPrimaryKey(excelTable.toString(), excelTablePrimaryKey.toString());
 
     columnNames.map(async (column) => {
       var columnID = await this.trim(column.toString());
 
       var excelColumn = $("#" + columnID).val();
 
-      await indexedDatabase.setColumnMapping(tableName, column.toString(), excelColumn.toString());
+      await store.setColumnMapping(tableName, column.toString(), excelColumn.toString());
     });
   }
 
   async createMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void> {
     //Create local tables to store the mappings
-    await indexedDatabase.closeDB();
-    await indexedDatabase.createObjectStore(excelTable);
+    await store.close();
+    await store.createInboundAndOutboundTables(excelTable);
 
     //TODO
     var mapping = <Mapping>{};
@@ -120,16 +120,16 @@ export class ExcelAPI {
 
     var tableName = mappingForm.getFormTableName().toString();
     var columnNames = mappingForm.getFormColumnNames();
+    // eslint-disable-next-line no-unused-vars
     var workgroupId = mappingForm.getFormWorkgroupID().toString();
 
     //TO SECURE --> Validate Inputs (Table Name, Column Names)
-    //Add all this to a mapping data type and call createMapping with it
     var mappingTable = $("#mapping-form #table-name").val().toString();
-    await indexedDatabase.setTableName(mappingTable, tableName);
+    await store.setTableName(mappingTable, tableName);
     table.type = mappingTable;
 
     var mappingPrimaryKey = $("#mapping-form #primary-key").val().toString();
-    await indexedDatabase.setPrimaryKey(tableName, mappingPrimaryKey);
+    await store.setPrimaryKey(tableName, mappingPrimaryKey);
     table.primaryKey = mappingPrimaryKey;
 
     var fields = [];
@@ -140,7 +140,7 @@ export class ExcelAPI {
       var columnType = $("#" + columnID)
         .val()
         .toString();
-      await indexedDatabase.setColumnMapping(tableName, columnName.toString(), columnName.toString());
+      await store.setColumnMapping(tableName, columnName.toString(), columnName.toString());
       tableColumn.name = columnName.toString();
       tableColumn.type = columnType;
 
@@ -154,11 +154,9 @@ export class ExcelAPI {
 
     mapping.models = models;
 
-    mapping.workgroupId = workgroupId.toString();
-    console.log(mapping);
     //TO SECURE --> JSON encoding
-    await identClient.createWorkgroupMapping(mapping);
-    //TODO: GET Mapping ID and do await indexedDatabase.setTableName(mappingTable, this.tableName) with mapping ID as mappingTable;
+    //await identClient.createWorkgroupMapping(workgroupId, "", mapping);
+    //TODO: GET Mapping ID and do await store.setTableName(mappingTable, this.tableName) with mapping ID as mappingTable;
   }
 
   async changeButtonColor(): Promise<void> {

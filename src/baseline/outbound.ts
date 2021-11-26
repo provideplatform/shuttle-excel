@@ -1,8 +1,8 @@
 import { onError } from "../common/common";
 import { Object, BaselineResponse } from "@provide/types";
 import { ProvideClient } from "src/client/provide-client";
-import { indexedDatabase } from "../settings/settings";
 import { excelHandler } from "./excel-handler";
+import { store } from "../settings/store";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
@@ -21,18 +21,22 @@ export class OutBound {
       console.log(JSON.stringify(message));
       let baselineResponse: BaselineResponse;
 
-      let recordExists = await indexedDatabase.keyExists(tableName, [message.payload.id, message.type], "Out");
+      let recordExists = await store.keyExists(tableName, [message.payload.id, message.type], "Out");
 
       console.log(recordExists);
 
       if (!recordExists) {
         baselineResponse = await identClient.sendCreateProtocolMessage(message);
         console.log(baselineResponse);
-        await indexedDatabase.set(tableName, [message.payload.id, message.type], baselineResponse.baselineId);
+        await store.setInboundAndOutboundTables(
+          tableName,
+          [message.payload.id, message.type],
+          baselineResponse.baselineId
+        );
       } else {
-        let baselineID = await indexedDatabase.get(tableName, [message.payload.id, message.type]);
-        console.log("Baseline ID: " + baselineID);
-        baselineResponse = await identClient.sendUpdateProtocolMessage(baselineID, message);
+        let baselineId = await store.getBaselineId(tableName, [message.payload.id, message.type]);
+        console.log("Baseline ID: " + baselineId);
+        baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
         console.log("Baseline message : " + baselineResponse);
       }
     } catch {
@@ -45,7 +49,7 @@ export class OutBound {
     tableName: string,
     changedData: Excel.TableChangedEventArgs
   ): Promise<Object> {
-    let primaryKey = await indexedDatabase.getPrimaryKeyField(tableName);
+    let primaryKey = await store.getPrimaryKeyField(tableName);
     console.log(primaryKey);
     let id = await this.getPrimaryKeyID(context, changedData, primaryKey);
     let dataColumnHeader = await excelHandler.getDataColumnHeader(context, changedData);

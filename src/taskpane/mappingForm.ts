@@ -1,7 +1,7 @@
 // NOTE: Logic of working with Excel
 
 import { Mapping } from "@provide/types";
-import { indexedDatabase } from "../settings/settings";
+import { store } from "../settings/store";
 import { onError } from "../common/common";
 
 // eslint-disable-next-line no-unused-vars
@@ -28,7 +28,7 @@ export class MappingForm {
       mapping.models.map(async (model) => {
         this.tableName = model.type;
         this.primaryKey = model.primaryKey;
-        this.tableExists = await indexedDatabase.tableExists(this.tableName);
+        this.tableExists = await store.tableExists(this.tableName);
 
         var tableID = await this.trim(model.type);
         var primaryKeyID = await this.trim(model.primaryKey);
@@ -184,7 +184,7 @@ export class MappingForm {
     if (this.tableExists) {
       options.map(async (column) => {
         //GET SAVED COLUMN NAMES
-        var excelColumn = await indexedDatabase.getColumnMapping(this.tableName, currentColumn);
+        var excelColumn = await store.getColumnMapping(this.tableName, currentColumn);
         //Add selected
         if (excelColumn == column) {
           str += `<option selected>` + column + "</option>";
