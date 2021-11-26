@@ -154,8 +154,10 @@ export class ExcelAPI {
 
     mapping.models = models;
 
+    mapping.workgroupId = workgroupId.toString();
+    console.log(mapping);
     //TO SECURE --> JSON encoding
-    await identClient.createWorkgroupMapping(workgroupId, "", mapping);
+    await identClient.createWorkgroupMapping(mapping);
     //TODO: GET Mapping ID and do await indexedDatabase.setTableName(mappingTable, this.tableName) with mapping ID as mappingTable;
   }
 

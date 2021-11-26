@@ -44,7 +44,7 @@ export interface ProvideClient {
   getWorkgroupMappings(appId: string): Promise<Mapping[]>;
 
   // eslint-disable-next-line no-unused-vars
-  createWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void>;
+  createWorkgroupMapping(params: Object): Promise<void>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -53,7 +53,8 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
-  private host = "0.pgrok.provide.services:45659";
+  private scheme = "https";
+  private host = "0.pgrok.provide.services:34061";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -81,13 +82,13 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async authorizeOrganization(organizationId: Uuid): Promise<void> {
-    await this._userAuthContext.execute((accessToken) => {
+    await this._userAuthContext.execute(async (accessToken) => {
       const identService = identClientFactory(accessToken);
       const params = {
         scope: "offline_access",
         organization_id: organizationId,
       };
-      return identService.createToken(params).then((token) => {
+      await identService.createToken(params).then((token) => {
         const expiresIn = parseInt(token["expiresIn"]);
         const accessToken = new AccessToken(token.id, token.accessToken, expiresIn);
         this._orgAuthContext = new AuthContext(token.refreshToken, accessToken);
@@ -120,24 +121,30 @@ class ProvideClientImpl implements ProvideClient {
   }
 
   async getWorkgroupMappings(appId: string): Promise<Mapping[]> {
-    const retVal = await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    const retVal = await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return baselineService.fetchMappings({ workgroup_id: appId });
     });
     return retVal;
   }
 
   async updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
-    await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return baselineService.updateMapping(mappingId, params);
     });
   }
 
-  async createWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
-    await this._userAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.host);
-      return baselineService.createMapping(mappingId, params);
+  async createWorkgroupMapping(params: Object): Promise<void> {
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    await this._orgAuthContext.get((accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
+      return baselineService.createMapping(params);
     });
   }
 
@@ -145,7 +152,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return baselineService.createObject(message);
     });
     return retVal;
@@ -155,7 +162,7 @@ class ProvideClientImpl implements ProvideClient {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get((accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, "https", this.host);
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return baselineService.updateObject(baselineID, message);
     });
     return retVal;
