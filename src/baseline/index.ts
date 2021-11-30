@@ -31,20 +31,36 @@ export class Baseline {
     }).catch(this.catchError);
   }
 
+  async createSheetMappings(mappingForm: MappingForm): Promise<unknown> {
+    return await Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.createSheetListener(context).then(async (sheetName) => {
+        var button = document.getElementById("mapping-form-btn").innerHTML;
+
+        if (button == "Create Mapping") {
+          await excelAPI.createMappings(this._identClient, mappingForm, sheetName);
+        } else {
+          await excelAPI.saveMappings(mappingForm);
+        }
+      });
+      await context.sync();
+      await excelAPI.changeButtonColor();
+    }).catch(this.catchError);
+  }
+
   //Start the Baseline Service after login
   async startToSendAndReceiveProtocolMessage(identClient: ProvideClient): Promise<void> {
     try {
-      //Activate listeners on table
-      await this.activateTableListeners();
+      //Activate listeners on table or sheet
+      await this.activateListeners();
 
       //Set Provide client for sending messages
       this._identClient = identClient;
 
-      /* var data = {};
-      data["Region"] = "West";
+      /*var data = {};
+      data["Col 1"] = "West";
 
       const test = {
-        baselineID: "89455b85-6fec-4aec-a40d-551df0b13ca6",
+        baselineID: "89455b85-6fefc-4aec-a40d-551gggfdfdsffdsfdhgfdfsdffdsgf0b13chdsa6",
         id: "574733322",
         type: "general_consistency",
         payload: {
@@ -53,9 +69,9 @@ export class Baseline {
         },
       };
       Excel.run((context: Excel.RequestContext) => {
-       inboundMessage.updateExcelTable(context, test);
-       return context.sync(); 
-      })*/
+        inboundMessage.updateExcelTable(context, test);
+        return context.sync();
+      });*/
 
       //Connect to Nats for receiving messages
       if (!this._natsClient) {
@@ -75,7 +91,7 @@ export class Baseline {
     }
   }
 
-  sendMessage(changedData: Excel.TableChangedEventArgs): void {
+  sendMessage(changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs): void {
     Excel.run((context: Excel.RequestContext) => {
       outboundMessage.send(context, changedData, this._identClient);
       return context.sync();
@@ -95,9 +111,11 @@ export class Baseline {
     }
   }
 
-  private async activateTableListeners(): Promise<unknown> {
+  private async activateListeners(): Promise<unknown> {
     return Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.addTableListener(context);
+      //Activate either the table or sheet listener
+      //CLOSED -> await excelAPI.addTableListener(context);
+      await excelAPI.addSheetListener(context);
       return context.sync();
     }).catch(this.catchError);
   }

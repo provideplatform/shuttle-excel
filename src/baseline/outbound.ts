@@ -10,11 +10,11 @@ import { store } from "../settings/store";
 export class OutBound {
   async send(
     context: Excel.RequestContext,
-    changedData: Excel.TableChangedEventArgs,
+    changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs,
     identClient: ProvideClient
   ): Promise<void> {
     try {
-      let tableName = await excelHandler.getTableName(context);
+      let tableName = await excelHandler.getSheetName(context);
       let message = await this.createMessage(context, tableName, changedData);
 
       //TO SECURE --> JsonSanitizer.sanitize(JSON.stringify(message))
@@ -47,7 +47,7 @@ export class OutBound {
   private async createMessage(
     context: Excel.RequestContext,
     tableName: string,
-    changedData: Excel.TableChangedEventArgs
+    changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs
   ): Promise<Object> {
     let primaryKey = await store.getPrimaryKeyField(tableName);
     console.log(primaryKey);
@@ -73,11 +73,11 @@ export class OutBound {
 
   private async getPrimaryKeyID(
     context: Excel.RequestContext,
-    changedData: Excel.TableChangedEventArgs,
+    changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs,
     primaryKeyColumnName: String
   ): Promise<string> {
     try {
-      let primaryKeyColumnAddress = await excelHandler.getColumnAddress(context, primaryKeyColumnName);
+      let primaryKeyColumnAddress = await excelHandler.getSheetColumnAddress(context, primaryKeyColumnName);
       let primaryKeyCell = primaryKeyColumnAddress + changedData.address.split(/\D+/)[1];
       let primaryKeyID = context.workbook.worksheets
         .getActiveWorksheet()

@@ -1,7 +1,6 @@
 import { onError } from "../common/common";
 import { Mapping, MappingModel, MappingField } from "@provide/types";
 import { baseline } from "./index";
-import { showPrimaryKeyDialog } from "../dialogs/dialogs-helpers";
 import { store } from "../settings/store";
 import { ProvideClient } from "src/client/provide-client";
 import * as $ from "jquery";
@@ -29,8 +28,36 @@ export class ExcelAPI {
     }
   }
 
+  async createSheetListener(context: Excel.RequestContext): Promise<string> {
+    try {
+      let sheet = context.workbook.worksheets.getActiveWorksheet();
+      sheet.load("name");
+
+      sheet.onChanged.add(this.onWorksheetChange);
+      await context.sync();
+
+      return sheet.name;
+    } catch {
+      this.catchError;
+    }
+  }
+
   //Read all the changed data.
   onChange(eventArgs: Excel.TableChangedEventArgs): Promise<unknown> {
+    //Set global variables
+    baseline.sendMessage(eventArgs);
+
+    return new Promise((resolve, reject) => {
+      if (eventArgs) {
+        resolve(eventArgs);
+      } else {
+        return reject(Error);
+      }
+    });
+  }
+
+  //Read all the changed data.
+  onWorksheetChange(eventArgs: Excel.WorksheetChangedEventArgs): Promise<unknown> {
     //Set global variables
     baseline.sendMessage(eventArgs);
 
@@ -53,7 +80,7 @@ export class ExcelAPI {
 
       await context.sync();
 
-      var tableExists = await store.openDB(table.name);
+      var tableExists = await store.tableExists("tablePrimaryKeys", table.name);
 
       if (tableExists) {
         table.onChanged.add(this.onChange);
@@ -64,31 +91,34 @@ export class ExcelAPI {
     }
   }
 
-  async getPrimaryKeyColumn(tableID: string): Promise<string> {
-    let primaryKeyColumn: string;
+  //Add listener to table
+  async addSheetListener(context: Excel.RequestContext): Promise<void> {
+    try {
+      let sheet = context.workbook.worksheets.getActiveWorksheet();
+      sheet.load("name");
 
-    await showPrimaryKeyDialog().then(
-      (primaryKeyInput) => {
-        primaryKeyColumn = primaryKeyInput.primaryKey;
-      },
-      () => {
-        /* NOTE: On cancel - do nothing */
+      await context.sync();
+
+      var sheetExists = await store.tableExists("tablePrimaryKeys", sheet.name);
+
+      if (sheetExists) {
+        sheet.onChanged.add(this.onWorksheetChange);
+        await context.sync();
       }
-    );
-
-    await store.setPrimaryKey(tableID, primaryKeyColumn);
-    return primaryKeyColumn;
+    } catch {
+      this.catchError;
+    }
   }
 
   async saveMappings(mappingForm: MappingForm): Promise<void> {
-    var tableName = await this.trim(mappingForm.getFormTableName().toString());
+    var tableName = await this.trim(mappingForm.getFormSheetName().toString());
     var primaryKey = await this.trim(mappingForm.getFormPrimaryKey().toString());
-    var columnNames = mappingForm.getFormColumnNames();
+    var columnNames = mappingForm.getFormSheetColumnNames();
 
     //Map table name with mapping ID
     var excelTable = $("#" + tableName).val();
 
-    var tableExists = await store.tableExists(excelTable.toString());
+    var tableExists = await store.tableExists("tableNames", excelTable.toString());
 
     if (!tableExists) {
       await store.close();
@@ -118,8 +148,8 @@ export class ExcelAPI {
     var mapping = <Mapping>{};
     var table = <MappingModel>{};
 
-    var tableName = mappingForm.getFormTableName().toString();
-    var columnNames = mappingForm.getFormColumnNames();
+    var tableName = mappingForm.getFormSheetName().toString();
+    var columnNames = mappingForm.getFormSheetColumnNames();
     // eslint-disable-next-line no-unused-vars
     var workgroupId = mappingForm.getFormWorkgroupID().toString();
 
@@ -155,7 +185,7 @@ export class ExcelAPI {
     mapping.models = models;
 
     //TO SECURE --> JSON encoding
-    //await identClient.createWorkgroupMapping(workgroupId, "", mapping);
+    await identClient.createWorkgroupMapping(mapping);
     //TODO: GET Mapping ID and do await store.setTableName(mappingTable, this.tableName) with mapping ID as mappingTable;
   }
 

@@ -13,7 +13,7 @@ export class InBound {
     //Disable event handler
     await this.disableTableListener(context);
 
-    var tableName = await excelHandler.getTableName(context);
+    var tableName = await excelHandler.getSheetName(context);
 
     var primaryKeyColumnName = await store.getPrimaryKeyField(tableName);
     //dataColumn - Can be retrieved from the message received or from my own indexed database
@@ -23,7 +23,8 @@ export class InBound {
     var id;
 
     var idExists = await store.keyExists(tableName, msg.baselineID, "In");
-    var primaryKeyColumnAddress = await excelHandler.getColumnAddress(context, primaryKeyColumnName);
+
+    var primaryKeyColumnAddress = await excelHandler.getSheetColumnAddress(context, primaryKeyColumnName);
     console.log(idExists);
 
     if (!idExists) {
@@ -37,6 +38,7 @@ export class InBound {
       await this.addNewIDToTable(context, id, primaryKeyColumnAddress);
 
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
+
       console.log(address);
     } else {
       id = (await store.getPrimaryKeyId(tableName, msg.baselineID))[0];
@@ -74,8 +76,6 @@ export class InBound {
     //Increment that value
     var id = parseInt(lastCell.values[0][0]);
     var newID = id + 1;
-
-    console.log(newID);
 
     return newID.toString();
   }

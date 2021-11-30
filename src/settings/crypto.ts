@@ -1,4 +1,5 @@
 import { store } from "./store";
+
 export class CryptoKeys {
   //Create Keys
   async generateKey() {
@@ -22,29 +23,30 @@ export class CryptoKeys {
   //Get Keys
   async getKey(): Promise<CryptoKey> {
     const key = await store.get("userInfo", "cryptoKey");
-    return key;
+    return key.value;
   }
 
   //Encrypt
-  async encrypt(data) {
+  async encrypt(data: string): Promise<ArrayBuffer> {
     const key = await this.getKey();
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     await store.set("userInfo", "keyName", "cryptoIv", iv);
+    var encodedData = await this.encodeData(data);
     return await window.crypto.subtle.encrypt(
       {
         name: "AES-GCM",
         iv: iv,
       },
       key,
-      data
+      encodedData
     );
   }
 
   //Decrypt
-  async decrypt(encryptedData) {
+  async decrypt(encryptedData: ArrayBuffer): Promise<string> {
     const key = await this.getKey();
     const iv: Uint8Array = await store.get("userInfo", "cryptoIv");
-    return window.crypto.subtle.decrypt(
+    const decryptedData = <ArrayBuffer>await window.crypto.subtle.decrypt(
       {
         name: "AES-GCM",
         iv: iv,
@@ -52,6 +54,18 @@ export class CryptoKeys {
       key,
       encryptedData
     );
+    const decodedData = await this.decodeData(decryptedData);
+    return decodedData;
+  }
+
+  private async encodeData(data: string): Promise<Uint8Array> {
+    let enc = new TextEncoder();
+    return enc.encode(data);
+  }
+
+  private async decodeData(data: ArrayBuffer): Promise<string> {
+    let dec = new TextDecoder();
+    return dec.decode(data);
   }
 }
 

@@ -13,14 +13,17 @@ export class MappingForm {
   columnNames: String[];
   tableExists: boolean;
   workgroupId: string;
+  sheetName;
+  sheetColumnNames: String[];
+  sheetColumnDataType: String[];
 
   async showWorkgroupMappings(mappings: Mapping[]): Promise<void> {
-    var excelTableName;
-    var excelColumnNames;
+    var excelSheetName;
+    var excelSheetColumnNames;
 
     await Excel.run(async (context: Excel.RequestContext) => {
-      excelTableName = await this.getTableName(context);
-      excelColumnNames = await this.getColumnNames(context);
+      excelSheetName = await this.getSheetName(context);
+      excelSheetColumnNames = await this.getSheetColumnNames(context);
     }).catch(this.catchError);
 
     var mappingForm = document.getElementById("mapping-form-options");
@@ -28,13 +31,13 @@ export class MappingForm {
       mapping.models.map(async (model) => {
         this.tableName = model.type;
         this.primaryKey = model.primaryKey;
-        this.tableExists = await store.tableExists(this.tableName);
+        this.tableExists = await store.tableExists("tableNames", this.tableName);
 
         var tableID = await this.trim(model.type);
         var primaryKeyID = await this.trim(model.primaryKey);
 
         document.getElementById("mapping-form-header").innerHTML = "Confirm Mappings";
-        var pkOptions = await this.addOptions(excelColumnNames, model.primaryKey);
+        var pkOptions = await this.addOptions(excelSheetColumnNames, model.primaryKey);
         //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
         //TO SECURE --> Input validation
         mappingForm.innerHTML =
@@ -47,7 +50,7 @@ export class MappingForm {
 						<input id="` +
           tableID +
           `" type="text" value="` +
-          excelTableName +
+          excelSheetName +
           `" class="form-control bg-transparent text-light shadow-none"\\>
 						</div>
 						<div class="form-group">	
@@ -63,15 +66,15 @@ export class MappingForm {
           `</select>
 						</div>`;
 
-        this.columnNames = [];
+        this.sheetColumnNames = [];
 
         model.fields.map(async (field) => {
           //field.name
           //field.type
 
           var columnID = await this.trim(field.name);
-          this.columnNames.push(field.name);
-          var options = await this.addOptions(excelColumnNames, field.name);
+          this.sheetColumnNames.push(field.name);
+          var options = await this.addOptions(excelSheetColumnNames, field.name);
           mappingForm.innerHTML +=
             `<div class="form-group container">
 						<div class="row">
@@ -105,16 +108,18 @@ export class MappingForm {
 
   async showUnmappedColumns(appId: string): Promise<void> {
     this.workgroupId = appId;
+    this.sheetColumnDataType = [];
 
     await Excel.run(async (context: Excel.RequestContext) => {
-      this.tableName = await this.getTableName(context);
-      this.columnNames = await this.getColumnNames(context);
+      this.sheetName = await this.getSheetName(context);
+      this.sheetColumnNames = await this.getSheetColumnNames(context);
+      this.sheetColumnDataType = await this.getSheetColumnDataType(context, this.sheetColumnNames);
     }).catch(this.catchError);
 
     var mappingForm = document.getElementById("mapping-form-options");
     document.getElementById("mapping-form-header").innerHTML = "Create New Mapping";
 
-    var pkOptions = await this.addOptions(this.columnNames);
+    var pkOptions = await this.addOptions(this.sheetColumnNames);
     //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
     //TO SECURE --> Input validation
     mappingForm.innerHTML =
@@ -122,7 +127,7 @@ export class MappingForm {
 				<div class="row">
 				<label class="col" for="table-name"> Table Name: </label>
 				<input id="table-name" type="text" value ="` +
-      this.tableName +
+      this.sheetName +
       `" class="col form-control bg-transparent text-light shadow-none" \\>
 				</div>
 				</div>
@@ -135,9 +140,10 @@ export class MappingForm {
 				</div>
 				</div>`;
 
-    this.columnNames.map(async (column) => {
+    this.sheetColumnNames.map(async (column, index) => {
       var columnID = await this.trim(column.toString());
-      var options = await this.addOptions(["String", "Number", "Boolean", "Date"]);
+      var columnDataType = await this.addOptions([this.sheetColumnDataType[index]]);
+
       //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
       //TO SECURE --> Input validation
       mappingForm.innerHTML +=
@@ -151,7 +157,7 @@ export class MappingForm {
 					<select id="` +
         columnID +
         `" class="col form-control bg-transparent text-light shadow-none">` +
-        options +
+        columnDataType +
         `</select>
 					<!--<input id="` +
         column +
@@ -171,12 +177,72 @@ export class MappingForm {
     return table.name;
   }
 
+  private async getSheetName(context: Excel.RequestContext): Promise<String> {
+    var sheet = context.workbook.worksheets.getActiveWorksheet();
+    sheet.load("name");
+    await context.sync();
+    return sheet.name;
+  }
+
   private async getColumnNames(context: Excel.RequestContext): Promise<String[]> {
     var table = context.workbook.worksheets.getActiveWorksheet().getUsedRange().getTables().getFirst();
     var columns = table.getHeaderRowRange();
     columns.load("values");
     await context.sync();
     return columns.values[0];
+  }
+
+  private async getSheetColumnNames(context: Excel.RequestContext): Promise<String[]> {
+    var sheet = context.workbook.worksheets.getActiveWorksheet().getUsedRange();
+    var columns = sheet.getRow(0);
+    columns.load("values");
+    await context.sync();
+    return columns.values[0];
+  }
+
+  private async getSheetColumnDataType(context: Excel.RequestContext, columnNames: String[]): Promise<String[]> {
+    var columnAddresses = await this.getSheetColumnAddress(context, columnNames);
+    var columnDataType = [];
+    columnAddresses.forEach((col) => {
+      var colRange = context.workbook.worksheets
+        .getActiveWorksheet()
+        .getRange(col + ":" + col)
+        .getUsedRange();
+      var lastCell = colRange.getLastCell();
+      columnDataType.push(lastCell);
+      lastCell.load("valueTypes");
+    });
+
+    await context.sync();
+
+    columnDataType.forEach((col, i) => {
+      columnDataType[i] = col.valueTypes[0][0].toString();
+    });
+
+    return columnDataType;
+  }
+
+  private async getSheetColumnAddress(context: Excel.RequestContext, columns: String[]): Promise<string[]> {
+    var columnAddresses = [];
+
+    var sheet = context.workbook.worksheets.getActiveWorksheet().getUsedRange();
+    var headerRange = sheet.getRow(0);
+
+    columns.forEach((column) => {
+      let headerCell = headerRange.findOrNullObject(column.toString(), { completeMatch: true });
+      columnAddresses.push(headerCell);
+      headerCell.load("address");
+    });
+
+    await context.sync();
+
+    columnAddresses.forEach((headerCell, i) => {
+      var headerCellAddress = headerCell.address.split("!")[1];
+      var columnAddress = headerCellAddress.split(/\d+/)[0];
+      columnAddresses[i] = columnAddress;
+    });
+
+    return columnAddresses;
   }
 
   private async addOptions(options: String[], currentColumn?: string): Promise<String> {
@@ -202,12 +268,19 @@ export class MappingForm {
     return this.tableName;
   }
 
+  getFormSheetName(): String {
+    return this.sheetName;
+  }
+
   getFormPrimaryKey(): String {
     return this.primaryKey;
   }
 
   getFormColumnNames(): String[] {
     return this.columnNames;
+  }
+  getFormSheetColumnNames(): String[] {
+    return this.sheetColumnNames;
   }
 
   getFormWorkgroupID(): String {

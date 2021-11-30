@@ -14,16 +14,17 @@ export class LoginFormData implements AuthParams {
   }
 
   isValid(): boolean | string {
-    //TO SECURE
-    //var mailformat = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
-    //if(inputText.value.match(mailformat))
+    var emailFormat = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    var passwordFormat = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])[A-Za-z\d$@$!%*#?&]{8,}$/;
 
-    //var passw=  /^[A-Za-z]\w{7,14}$/; --> 8-15 characters \w = [A-Za-z0-9_]
-    //if(inputtxt.value.match(passw))
-    if (this.email && this.password) {
-      return true;
-    } else {
+    if (!this.email || !this.password) {
       return "Email and password are required";
+    } else if (!this.email.match(emailFormat)) {
+      return "Email format is not valid";
+    } else if (!this.password.match(passwordFormat)) {
+      return "Password must contain minimum eight characters, at least one letter, one number and one special character ";
+    } else {
+      return true;
     }
   }
 

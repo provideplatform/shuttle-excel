@@ -54,7 +54,7 @@ class ProvideClientImpl implements ProvideClient {
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
   private scheme = "https";
-  private host = "0.pgrok.provide.services:34061";
+  private host = "0.pgrok.provide.services:35723";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;

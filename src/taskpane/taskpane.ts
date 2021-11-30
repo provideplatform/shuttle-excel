@@ -6,7 +6,7 @@ import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
 import { mappingForm, MappingForm } from "./mappingForm";
-import { sessionSettings as session } from "../settings/settings";
+import { store } from "../settings/store";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
@@ -43,7 +43,7 @@ Office.onReady((info) => {
 });
 
 function tryRestoreAutorization() {
-  return Promise.all([session.getRefreshToken(), session.getUser()]).then(([refreshToken, user]) => {
+  return Promise.all([store.getRefreshToken(), store.getUser()]).then(([refreshToken, user]) => {
     if (!refreshToken || !user) {
       setUiForLogin();
       spinnerOff();
@@ -59,7 +59,7 @@ function tryRestoreAutorization() {
         spinnerOff();
       },
       (reason) => {
-        session.removeTokenAndUser();
+        store.removeTokenAndUser();
         setUiForLogin();
         onError(reason);
       }
@@ -106,7 +106,8 @@ function setUiForWorkgroups() {
   $("#app-body").show();
 }
 
-function onLogin(): Promise<void> {
+async function onLogin(): Promise<void> {
+  await store.open();
   const $form = $("#login-ui form");
   const loginFormData = new LoginFormData($form);
   const isValid = loginFormData.isValid();
@@ -127,9 +128,7 @@ function onLogin(): Promise<void> {
       const token: TokenStr = identClient.userRefreshToken;
       const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
-      //TO SECURE --> Create safe storage
-      //file.setTokenAndUser(token, user);
-      return session.setTokenAndUser(token, user).then(spinnerOff);
+      return store.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
     .then(getMyWorkgroups)
     .then(startBaselining);
@@ -143,9 +142,10 @@ function onLogout() {
 
   identClient
     .logout()
-    .then(() => {
+    .then(async () => {
       identClient = null;
-      return session.removeTokenAndUser();
+      await store.removeTokenAndUser();
+      return await store.close();
     }, onError)
     .then(() => {
       setUiForLogin();
@@ -168,7 +168,7 @@ function onShowMainPage() {
   const token: TokenStr = identClient.userRefreshToken;
   const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
-  return session.setTokenAndUser(token, user).then(spinnerOff).then(getMyWorkgroups, onError);
+  return store.setTokenAndUser(token, user).then(spinnerOff).then(getMyWorkgroups, onError);
 }
 
 function onGetJwtokenDialog() {

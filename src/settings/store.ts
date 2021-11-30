@@ -1,14 +1,15 @@
 import { Record } from "src/models/record";
 import { indexedDatabase as db } from "./settings";
+import { TokenStr } from "src/models/common";
+import { User } from "src/models/user";
+import { crypto } from "./crypto";
 export class Store {
-  async openDB(tableName: string): Promise<unknown> {
+  onDbOpen = false;
+
+  //TODO --> WHEN to open
+  async open(): Promise<void> {
     //Open DB and create tables
-    var onSuccess = await db.open();
-    var tableExists = false;
-    if (onSuccess) {
-      tableExists = await this.keyExists("tablePrimaryKeys", tableName);
-    }
-    return tableExists;
+    this.onDbOpen = await db.open();
   }
   async close(): Promise<void> {
     await db.close();
@@ -19,7 +20,10 @@ export class Store {
   }
 
   async set(tableName, keyPath: string, key: string, value: any) {
-    const record = { keyPath: key, value: value };
+    const record = {};
+    record[keyPath] = key;
+    record["value"] = value;
+
     await db.set(tableName, record);
   }
 
@@ -122,8 +126,12 @@ export class Store {
     return columnMapping;
   }
 
-  async tableExists(tableName: string): Promise<boolean> {
-    return await this.keyExists("tableNames", tableName);
+  async tableExists(dbObjectStoreName: string, tableName: string): Promise<boolean> {
+    var tableExists = false;
+    if (this.onDbOpen) {
+      tableExists = await this.keyExists(dbObjectStoreName, tableName);
+    }
+    return tableExists;
   }
 
   async keyExists(tableName: string, key: any, source?: string): Promise<boolean> {
@@ -150,8 +158,45 @@ export class Store {
     }
   }
 
-  async remove(tableName: string, key: string[]): Promise<void> {
+  async remove(tableName: string, key: string): Promise<void> {
     await db.remove(tableName, key);
+  }
+
+  async getRefreshToken(): Promise<TokenStr | null> {
+    if (this.onDbOpen) {
+      const encryptedUserInfo = await this.get("userInfo", "userInfo");
+      const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
+      const value = JSON.parse(decryptedUserInfo).refreshToken;
+      return (value as TokenStr) || null;
+    }
+    return null;
+  }
+
+  async getUser(): Promise<User | null> {
+    if (this.onDbOpen) {
+      const encryptedUserInfo = await this.get("userInfo", "userInfo");
+      const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
+      const value = JSON.parse(decryptedUserInfo).user;
+      return (value as User) || null;
+    }
+    return null;
+  }
+
+  async setTokenAndUser(token: TokenStr, user: User): Promise<void> {
+    var userInfo = {
+      refreshToken: token,
+      user: user,
+    };
+
+    await crypto.setKey();
+    var encryptedUserInfo = await crypto.encrypt(JSON.stringify(userInfo));
+    await this.set("userInfo", "keyName", "userInfo", encryptedUserInfo);
+  }
+
+  async removeTokenAndUser(): Promise<void> {
+    await store.remove("userInfo", "userInfo");
+    await store.remove("userInfo", "cryptoKey");
+    await store.remove("userInfo", "cryptoIv");
   }
 }
 

@@ -28,7 +28,8 @@ export class ExcelWorker {
   }
 
   async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {
-    return baseline.createTableMappings(mappingForm);
+    //return baseline.createTableMappings(mappingForm);
+    return baseline.createSheetMappings(mappingForm);
   }
 
   startBaselineService(identClient: ProvideClient): Promise<void> {

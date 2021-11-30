@@ -267,7 +267,7 @@ class IndexedDBSettings {
     return recordCount;
   }
 
-  async remove(tableName: string, key: string[]): Promise<void> {
+  async remove(tableName: string, key: string): Promise<void> {
     const tx = this.db.transaction(tableName, "readwrite");
     const store = tx.objectStore(tableName);
     const result = await store.get(key);

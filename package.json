@@ -30,6 +30,7 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.15.3",
     "bootstrap": "^4.6.0",
+    "buffer": "^6.0.3",
     "core-js": "^3.9.1",
     "idb": "^6.1.2",
     "jquery": "^3.6.0",
