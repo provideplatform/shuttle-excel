@@ -36,7 +36,7 @@
     "jquery": "^3.6.0",
     "jsonwebtoken": "8.5.1",
     "native-file-system-adapter": "^2.0.1",
-    "provide-js": "^1.6.15",
+    "provide-js": "^1.6.16",
     "regenerator-runtime": "^0.13.7",
     "uuid-validate": "0.0.3"
   },

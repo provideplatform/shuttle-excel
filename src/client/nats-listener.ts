@@ -1,9 +1,9 @@
-import * as natsutil from 'ts-natsutil';
+import * as natsutil from "ts-natsutil";
 export class NatsClientFacade {
-  public static readonly DEFAULT_SCHEME = 'wss';
+  public static readonly DEFAULT_SCHEME = "wss";
   //public static readonly DEFAULT_HOST = 'provide.services';
-  public static readonly DEFAULT_HOST = 'localhost:444';
-  public static readonly DEFAULT_PATH = '';
+  public static readonly DEFAULT_HOST = "localhost:4221";
+  public static readonly DEFAULT_PATH = "";
   private readonly bearerToken?: string;
   private readonly natsUrl: string;
   private service?: natsutil.INatsService;
@@ -17,14 +17,19 @@ export class NatsClientFacade {
    * @param host The domain name or ip address and port of the service
    * @param path The base path
    */
-  constructor(bearerToken?: string, scheme = NatsClientFacade.DEFAULT_SCHEME, host = NatsClientFacade.DEFAULT_HOST, path?: string) {
+  constructor(
+    bearerToken?: string,
+    scheme = NatsClientFacade.DEFAULT_SCHEME,
+    host = NatsClientFacade.DEFAULT_HOST,
+    path?: string
+  ) {
     this.bearerToken = bearerToken;
-    this.natsUrl = `${scheme}://${host}/${path ? `${path}/` : ''}`;
+    this.natsUrl = `${scheme}://${host}/${path ? `${path}/` : ""}`;
   }
 
   //TODO : Need to check the Nats service factory --> NatsService/NatsWS implements INatsService
   public connect(): Promise<any> {
-    const service = natsutil.natsServiceFactory({bearerToken: this.bearerToken, natsServers: [this.natsUrl]});
+    const service = natsutil.natsServiceFactory({ bearerToken: this.bearerToken, natsServers: [this.natsUrl] });
     return service.connect().then(() => {
       console.log(`NATS connection established to endpoint: ${this.natsUrl}`);
       this.service = service;
@@ -33,7 +38,7 @@ export class NatsClientFacade {
   public close() {
     this.service?.disconnect();
   }
-  public publish({subject, payload, reply}): Promise<any> {
+  public publish({ subject, payload, reply }): Promise<any> {
     if (!this.service) {
       return Promise.reject(`no NATS service available to publish message on subject: ${subject}`);
     }
@@ -51,11 +56,10 @@ export class NatsClientFacade {
     }
     this.service.unsubscribe(subject);
   }
-  public request({subject, timeout, payload}): Promise<any> {
+  public request({ subject, timeout, payload }): Promise<any> {
     if (!this.service) {
       return Promise.reject(`no NATS service available to send request on subject: ${subject}`);
     }
     return this.service.request(subject, timeout, payload);
   }
 }
-

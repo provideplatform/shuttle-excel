@@ -183,6 +183,8 @@ export class ExcelAPI {
     models.push(table);
 
     mapping.models = models;
+    mapping.workgroupId = workgroupId;
+    console.log(mapping);
 
     //TO SECURE --> JSON encoding
     await identClient.createWorkgroupMapping(mapping);
