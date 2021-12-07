@@ -1,5 +1,4 @@
 import { onError } from "../common/common";
-import { Mapping, MappingModel, MappingField } from "@provide/types";
 import { baseline } from "./index";
 import { store } from "../settings/store";
 import { ProvideClient } from "src/client/provide-client";
@@ -144,10 +143,6 @@ export class ExcelAPI {
     await store.close();
     await store.createInboundAndOutboundTables(excelTable);
 
-    //TODO
-    var mapping = <Mapping>{};
-    var table = <MappingModel>{};
-
     var tableName = mappingForm.getFormSheetName().toString();
     var columnNames = mappingForm.getFormSheetColumnNames();
     // eslint-disable-next-line no-unused-vars
@@ -156,34 +151,45 @@ export class ExcelAPI {
     //TO SECURE --> Validate Inputs (Table Name, Column Names)
     var mappingTable = $("#mapping-form #table-name").val().toString();
     await store.setTableName(mappingTable, tableName);
-    table.type = mappingTable;
 
     var mappingPrimaryKey = $("#mapping-form #primary-key").val().toString();
     await store.setPrimaryKey(tableName, mappingPrimaryKey);
-    table.primaryKey = mappingPrimaryKey;
 
     var fields = [];
 
     fields = columnNames.map(async (columnName) => {
-      var tableColumn = <MappingField>{};
       var columnID = await this.trim(columnName.toString());
       var columnType = $("#" + columnID)
         .val()
         .toString();
       await store.setColumnMapping(tableName, columnName.toString(), columnName.toString());
-      tableColumn.name = columnName.toString();
-      tableColumn.type = columnType;
+      var tableColumn = {
+        name: columnName.toString(),
+        type: columnType,
+      };
 
       return tableColumn;
     });
 
-    table.fields = await Promise.all(fields);
+    var allFields = await Promise.all(fields);
+
+    var table = {
+      type: mappingTable,
+      primary_key: mappingPrimaryKey,
+      fields: allFields,
+    };
 
     var models = [];
     models.push(table);
 
-    mapping.models = models;
-    mapping.workgroupId = workgroupId;
+    var mapping = {
+      name: mappingTable,
+      description: null,
+      type: "mapping_type",
+      workgroup_id: workgroupId,
+      models: models,
+    };
+
     console.log(mapping);
 
     //TO SECURE --> JSON encoding

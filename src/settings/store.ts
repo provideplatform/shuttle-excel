@@ -123,7 +123,7 @@ export class Store {
 
   async getColumnMapping(tableName: string, key: string): Promise<string> {
     var columnMapping: string = await db.get(tableName, key);
-    return columnMapping;
+    return columnMapping["mapping"];
   }
 
   async tableExists(dbObjectStoreName: string, tableName: string): Promise<boolean> {

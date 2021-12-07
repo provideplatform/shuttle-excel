@@ -27,17 +27,18 @@ export class MappingForm {
     }).catch(this.catchError);
 
     var mappingForm = document.getElementById("mapping-form-options");
+    mappingForm.innerHTML = "";
     mappings.map((mapping) => {
+      document.getElementById("mapping-form-header").innerHTML = "Mappings";
       mapping.models.map(async (model) => {
-        this.tableName = model.type;
-        this.primaryKey = model.primaryKey;
+        this.tableName = mapping["name"];
+        this.primaryKey = model["primary_key"];
         this.tableExists = await store.tableExists("tableNames", this.tableName);
 
-        var tableID = await this.trim(model.type);
-        var primaryKeyID = await this.trim(model.primaryKey);
+        var tableID = await this.trim(this.tableName);
+        var primaryKeyID = await this.trim(this.primaryKey);
 
-        document.getElementById("mapping-form-header").innerHTML = "Confirm Mappings";
-        var pkOptions = await this.addOptions(excelSheetColumnNames, model.primaryKey);
+        var pkOptions = await this.addOptions(excelSheetColumnNames, model["primary_key"]);
         //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
         //TO SECURE --> Input validation
         mappingForm.innerHTML =
@@ -45,7 +46,7 @@ export class MappingForm {
 						<label class="font-weight-normal h6" for="` +
           tableID +
           `">Table Name: ` +
-          model.type +
+          mapping["name"] +
           `</label>
 						<input id="` +
           tableID +
@@ -56,8 +57,8 @@ export class MappingForm {
 						<div class="form-group">	
 						<label class="font-weight-normal h6" for="` +
           primaryKeyID +
-          `">Primary Key Column: ` +
-          model.primaryKey +
+          `">` +
+          model["primary_key"] +
           `</label>
 						<select id="` +
           primaryKeyID +
@@ -68,22 +69,22 @@ export class MappingForm {
 
         this.sheetColumnNames = [];
 
-        model.fields.map(async (field) => {
+        model["fields"].map(async (field) => {
           //field.name
           //field.type
 
-          var columnID = await this.trim(field.name);
-          this.sheetColumnNames.push(field.name);
-          var options = await this.addOptions(excelSheetColumnNames, field.name);
+          var columnID = await this.trim(field["name"]);
+          this.sheetColumnNames.push(field["name"]);
+          var options = await this.addOptions(excelSheetColumnNames, field["name"]);
           mappingForm.innerHTML +=
             `<div class="form-group container">
 						<div class="row">
 						<label class="col font-weight-normal h6" for="` +
             columnID +
             `">` +
-            field.name +
+            field["name"] +
             `<div class="text-muted font-weight-light">(` +
-            field.type +
+            field["type"] +
             `)</div></label>
 						<select id="` +
             columnID +
@@ -246,21 +247,26 @@ export class MappingForm {
   }
 
   private async addOptions(options: String[], currentColumn?: string): Promise<String> {
-    var str;
+    var str = "";
     if (this.tableExists) {
-      options.map(async (column) => {
+      var optionStr = await options.map(async (column) => {
         //GET SAVED COLUMN NAMES
         var excelColumn = await store.getColumnMapping(this.tableName, currentColumn);
         //Add selected
         if (excelColumn == column) {
           str += `<option selected>` + column + "</option>";
+        } else {
+          str += `<option>` + column + "</option>";
         }
-        str += `<option selected>` + column + "</option>";
+        return str;
       });
+
+      return await optionStr[options.length - 1];
     }
     options.map(async (option) => {
       str += `<option selected>` + option + "</option>";
     });
+
     return str;
   }
 

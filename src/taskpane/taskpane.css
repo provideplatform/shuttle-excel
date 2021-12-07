@@ -35,7 +35,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0,0,0,0.5); /* Black background with opacity */
+  background-color: rgba(0, 0, 0, 0.5); /* Black background with opacity */
   z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
   cursor: pointer; /* Add a pointer on hover */
 }
@@ -51,19 +51,23 @@ body {
 }
 
 #workgroup-ui {
-  -webkit-transition:all 1.0s ease-in-out;
-  -moz-transition:all 1.0s ease-in-out;
-  -o-transition:all 1.0s ease-in-out;
-  transition:all 1.0s ease-in-out;
+  -webkit-transition: all 1s ease-in-out;
+  -moz-transition: all 1s ease-in-out;
+  -o-transition: all 1s ease-in-out;
+  transition: all 1s ease-in-out;
 }
 
-#workgroups-list {
+#workgroups-list,
+#workflows-list,
+#worksteps-list {
   font-size: 1rem;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
-#show-jwt-input-btn {
+#show-jwt-input-btn,
+#create-workflow,
+#create-workstep {
   margin-top: 1rem;
 }
 
@@ -71,8 +75,8 @@ body {
   margin-top: 1rem;
 }
 
-.list-group-item {
+.list-group-item,
+#workstep-details {
   background-color: #d9d9d9;
   padding: 0.5rem;
 }
-

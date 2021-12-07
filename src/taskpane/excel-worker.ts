@@ -1,6 +1,6 @@
 // NOTE: Logic of working with Excel
 
-import { Application } from "@provide/types";
+import { Application, Workflow, Workstep } from "@provide/types";
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
@@ -23,6 +23,42 @@ export class ExcelWorker {
         app.id +
         `">` +
         app.name +
+        `</button>`;
+    });
+  }
+  async showWorkflows(workflows: Workflow[]): Promise<void> {
+    var completelist = document.getElementById("workflows-list");
+    completelist.innerHTML = "";
+
+    workflows.map((workflow) => {
+      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
+      completelist.innerHTML +=
+        `<button type="button" class="list-group-item list-group-item-action" id="` +
+        workflow.id +
+        `">` +
+        workflow.name +
+        `</button>`;
+    });
+  }
+
+  async showMappingButton(): Promise<void> {
+    var completelist = document.getElementById("workgroup-mapping");
+    completelist.innerHTML = "";
+
+    //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
+    completelist.innerHTML += `<button type="button" class="btn btn-primary btn-sm float-right" id="mapping-btn">Mappings</button>`;
+  }
+
+  async showWorksteps(worksteps: Workstep[]): Promise<void> {
+    var completelist = document.getElementById("worksteps-list");
+    completelist.innerHTML = "";
+    worksteps.map((workstep) => {
+      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
+      completelist.innerHTML +=
+        `<button type="button" class="list-group-item list-group-item-action" id="` +
+        workstep.id +
+        `">` +
+        workstep.name +
         `</button>`;
     });
   }
