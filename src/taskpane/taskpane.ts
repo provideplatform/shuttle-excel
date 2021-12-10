@@ -42,7 +42,7 @@ Office.onReady((info) => {
     $(function () {
       initUi();
 
-      setUiForLogin();
+      tryRestoreAutorization();
     });
   }
 });
@@ -56,20 +56,20 @@ function tryRestoreAutorization() {
       return;
     }
 
-    // const restoreFn = stubAuth ? restoreStub : restore;
-    // spinnerOn();
-    // return restoreFn(refreshToken, user).then(
-    //   (client) => {
-    //     identClient = client;
-    //     setUiAfterLogin();
-    //     spinnerOff();
-    //   }
-    // (reason) => {
-    //   store.removeTokenAndUser();
-    //   setUiForLogin();
-    //   onError(reason);
-    // }
-    // );
+    const restoreFn = stubAuth ? restoreStub : restore;
+    spinnerOn();
+    return restoreFn(refreshToken, user).then(
+      (client) => {
+        identClient = client;
+        setUiAfterLogin();
+        spinnerOff();
+      },
+      (reason) => {
+        store.removeTokenAndUser();
+        setUiForLogin();
+        onError(reason);
+      }
+    );
   });
 }
 
@@ -218,7 +218,7 @@ async function onLogin(): Promise<void> {
   const authenticateFn = stubAuth ? authenticateStub : authenticate;
   spinnerOn();
   return authenticateFn(loginFormData)
-    .then((client) => {
+    .then(async (client) => {
       identClient = client;
 
       loginFormData.clean();
@@ -227,6 +227,7 @@ async function onLogin(): Promise<void> {
       const token: TokenStr = identClient.userRefreshToken;
       const user: User = { id: identClient.user.id, name: identClient.user.name, email: identClient.user.email };
 
+      await store.removeTokenAndUser();
       return store.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
     .then(getMyWorkgroups)
@@ -292,9 +293,12 @@ function onGetJwtokenDialog() {
 }
 
 function getMyWorkgroups(): Promise<void> {
-  setUiAfterLogin();
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
 
-  spinnerOn();
+  setUiAfterLogin();
   return identClient.getWorkgroups().then(async (apps) => {
     await excelWorker.showWorkgroups("My Workgroups", apps);
     return await activateWorkgroupButtons(apps).then(spinnerOff);
@@ -312,6 +316,11 @@ async function activateWorkgroupButtons(applications: Application[]): Promise<vo
 }
 
 async function getMyWorkflows(appId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   setUiForWorkflows();
 
   currentWorkgroupId = appId;
@@ -320,6 +329,9 @@ async function getMyWorkflows(appId: string): Promise<void> {
   $("#workflow-back-btn").on("click", function () {
     getMyWorkgroups();
   });
+
+  //Prepare logout button
+  $("#workflow-ui #logout-btn").on("click", onLogout);
 
   //Show Mappings
   excelWorker.showMappingButton();
@@ -362,7 +374,15 @@ async function activateMappingButton(appId: string): Promise<void> {
 }
 
 async function createWorkflow(workgroupId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   setUiForCreateWorkflow();
+
+  //Prepare logout button
+  $("#workflow-create-ui #logout-btn").on("click", onLogout);
 
   $("#create-workflow-back-btn").on("click", function () {
     getMyWorkflows(workgroupId);
@@ -390,6 +410,11 @@ async function onSubmitCreateWorkflowForm(): Promise<unknown> {
 }
 
 async function getMyWorksteps(workflowId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   setUiForWorksteps();
 
   currentWorkflowId = workflowId;
@@ -397,6 +422,9 @@ async function getMyWorksteps(workflowId: string): Promise<void> {
   $("#workstep-back-btn").on("click", function () {
     getMyWorkflows(currentWorkgroupId);
   });
+
+  //Prepare logout button
+  $("#workstep-ui #logout-btn").on("click", onLogout);
 
   //Create workstep
   activateWorkstepCreateButton(workflowId);
@@ -428,11 +456,19 @@ async function activateWorkstepCreateButton(workflowId: string): Promise<void> {
 }
 
 async function createWorkstep(workflowId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   setUiForCreateWorkstep();
 
   $("#create-workstep-back-btn").on("click", function () {
     getMyWorksteps(workflowId);
   });
+
+  //Prepare logout button
+  $("#workstep-create-ui #logout-btn").on("click", onLogout);
 
   myWorkstep.showCreateWorkstepForm();
 }
@@ -459,6 +495,11 @@ async function onSubmitCreateWorkstepForm(): Promise<unknown> {
 }
 
 async function showWorkstepDetails(workstepId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   await identClient.getWorkstepDetails(currentWorkflowId, workstepId).then(async (workstep) => {
     setUiForWorkStepDetails();
 
@@ -466,16 +507,27 @@ async function showWorkstepDetails(workstepId: string): Promise<void> {
       getMyWorksteps(currentWorkgroupId);
     });
 
+    //Prepare logout button
+    $("#workstep-details-ui #logout-btn").on("click", onLogout);
+
     await myWorkstep.showWorkstepDetails(workstep);
   });
 }
 async function confirmMappings(appId: string): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
   setUiForMapping();
 
   //Prepare back button
   $("#mapping-back-btn").on("click", function () {
     getMyWorkflows(appId);
   });
+
+  //Prepare logout button
+  $("#mapping-ui #logout-btn").on("click", onLogout);
 
   return identClient.getWorkgroupMappings(appId).then(async (mappings) => {
     if (mappings && mappings.length) {

@@ -4,7 +4,7 @@ export class MyWorkstep {
     var workstepForm = document.getElementById("workstep-form-options");
     document.getElementById("workstep-form-header").innerHTML = "Create New Workstep";
 
-    workstepForm.innerHTML += `<div class="form-group container">
+    workstepForm.innerHTML = `<div class="form-group container">
 				<div class="row">
 				<label class="col" for="workstep-name"> Workstep Name: </label>
 				<input id="workstep-name" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
@@ -18,6 +18,7 @@ export class MyWorkstep {
   async showWorkstepDetails(workstep: Workstep): Promise<void> {
     var workstepDetailTable = document.getElementById("workstep-details");
     var keys = Object.keys(workstep);
+    workstepDetailTable.innerHTML = "";
     workstepDetailTable.innerHTML += `
     <thead>
     <tr>

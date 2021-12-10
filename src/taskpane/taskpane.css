@@ -4,6 +4,9 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-image: url(../../assets/image.png);
+  background-size: cover;
+  text-shadow: 0px 0px 6px rgba(2, 162, 224, 0.3);
 }
 
 .form-control::-webkit-input-placeholder,
