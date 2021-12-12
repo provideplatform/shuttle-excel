@@ -7,7 +7,7 @@ export class MyWorkstep {
     workstepForm.innerHTML = `<div class="form-group container">
 				<div class="row">
 				<label class="col" for="workstep-name"> Workstep Name: </label>
-				<input id="workstep-name" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
+				<input pattern="[\\w\\d\\s-]+" id="workstep-name" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
 				</div>
 				</div>`;
 

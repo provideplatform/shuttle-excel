@@ -3,6 +3,7 @@ import { indexedDatabase as db } from "./settings";
 import { TokenStr } from "src/models/common";
 import { User } from "src/models/user";
 import { crypto } from "./crypto";
+import { alerts } from "../common/alerts";
 export class Store {
   onDbOpen = false;
 
@@ -163,23 +164,31 @@ export class Store {
   }
 
   async getRefreshToken(): Promise<TokenStr | null> {
-    if (this.onDbOpen) {
-      const encryptedUserInfo = await this.get("userInfo", "userInfo");
-      const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
-      const value = JSON.parse(decryptedUserInfo).refreshToken;
-      return (value as TokenStr) || null;
+    try {
+      if (this.onDbOpen) {
+        const encryptedUserInfo = await this.get("userInfo", "userInfo");
+        const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
+        const value = JSON.parse(decryptedUserInfo).refreshToken;
+        return (value as TokenStr) || null;
+      }
+      return null;
+    } catch (e) {
+      alerts.error(e);
     }
-    return null;
   }
 
   async getUser(): Promise<User | null> {
-    if (this.onDbOpen) {
-      const encryptedUserInfo = await this.get("userInfo", "userInfo");
-      const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
-      const value = JSON.parse(decryptedUserInfo).user;
-      return (value as User) || null;
+    try {
+      if (this.onDbOpen) {
+        const encryptedUserInfo = await this.get("userInfo", "userInfo");
+        const decryptedUserInfo: string = await crypto.decrypt(encryptedUserInfo);
+        const value = JSON.parse(decryptedUserInfo).user;
+        return (value as User) || null;
+      }
+      return null;
+    } catch (e) {
+      alerts.error(e);
     }
-    return null;
   }
 
   async setTokenAndUser(token: TokenStr, user: User): Promise<void> {

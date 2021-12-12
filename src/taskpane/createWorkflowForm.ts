@@ -6,13 +6,13 @@ export class WorkflowForm {
     workflowForm.innerHTML = `<div class="form-group container">
 				<div class="row">
 				<label class="col" for="workflow-name"> Workflow Name: </label>
-				<input id="workflow-name" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
+				<input pattern="[\\w\\d\\s-]+" id="workflow-name" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
 				</div>
 				</div>
 				<div class="form-group container">
 				<div class="row">
 				<label class="col" for="version"> Version: </label>
-				<input id="version" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
+				<input pattern="[\\w\\d\\s-]+" id="version" type="text" class="col form-control bg-transparent text-light shadow-none" \\>
 				</div>
 				</div>`;
 

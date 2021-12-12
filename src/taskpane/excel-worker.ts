@@ -5,6 +5,7 @@ import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
 import { MappingForm } from "./mappingForm";
+import { encodeForHTML } from "../common/validate";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension */
@@ -17,12 +18,11 @@ export class ExcelWorker {
     completelist.innerHTML = "";
 
     applications.map((app) => {
-      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
       completelist.innerHTML +=
         `<button type="button" class="list-group-item list-group-item-action" id="` +
-        app.id +
+        encodeForHTML(app.id) +
         `">` +
-        app.name +
+        encodeForHTML(app.name) +
         `</button>`;
     });
   }
@@ -31,12 +31,11 @@ export class ExcelWorker {
     completelist.innerHTML = "";
 
     workflows.map((workflow) => {
-      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
       completelist.innerHTML +=
         `<button type="button" class="list-group-item list-group-item-action" id="` +
-        workflow.id +
+        encodeForHTML(workflow.id) +
         `">` +
-        workflow.name +
+        encodeForHTML(workflow.name) +
         `</button>`;
     });
   }
@@ -53,12 +52,11 @@ export class ExcelWorker {
     var completelist = document.getElementById("worksteps-list");
     completelist.innerHTML = "";
     worksteps.map((workstep) => {
-      //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
       completelist.innerHTML +=
         `<button type="button" class="list-group-item list-group-item-action" id="` +
-        workstep.id +
+        encodeForHTML(workstep.id) +
         `">` +
-        workstep.name +
+        encodeForHTML(workstep.name) +
         `</button>`;
     });
   }

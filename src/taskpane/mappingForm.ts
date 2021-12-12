@@ -3,6 +3,7 @@
 import { Mapping } from "@provide/types";
 import { store } from "../settings/store";
 import { onError } from "../common/common";
+import { encodeForHTML } from "../common/validate";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension */
@@ -44,24 +45,24 @@ export class MappingForm {
         mappingForm.innerHTML =
           `<div class="form-group">
 						<label class="font-weight-normal h6" for="` +
-          tableID +
+          encodeForHTML(tableID) +
           `">Table Name: ` +
-          mapping["name"] +
+          encodeForHTML(mapping["name"]) +
           `</label>
-						<input id="` +
-          tableID +
+						<input pattern="[\\w\\d\\s-]+" id="` +
+          encodeForHTML(tableID) +
           `" type="text" value="` +
-          excelSheetName +
+          encodeForHTML(excelSheetName) +
           `" class="form-control bg-transparent text-light shadow-none"\\>
 						</div>
 						<div class="form-group">	
 						<label class="font-weight-normal h6" for="` +
-          primaryKeyID +
+          encodeForHTML(primaryKeyID) +
           `">` +
-          model["primary_key"] +
+          encodeForHTML(model["primary_key"]) +
           `</label>
 						<select id="` +
-          primaryKeyID +
+          encodeForHTML(primaryKeyID) +
           `" class="form-control bg-transparent text-light shadow-none">` +
           pkOptions +
           `</select>
@@ -80,14 +81,14 @@ export class MappingForm {
             `<div class="form-group container">
 						<div class="row">
 						<label class="col font-weight-normal h6" for="` +
-            columnID +
+            encodeForHTML(columnID) +
             `">` +
-            field["name"] +
+            encodeForHTML(field["name"]) +
             `<div class="text-muted font-weight-light">(` +
-            field["type"] +
+            encodeForHTML(field["type"]) +
             `)</div></label>
 						<select id="` +
-            columnID +
+            encodeForHTML(columnID) +
             `" class="col form-control bg-transparent text-light shadow-none">` +
             options +
             `</select>
@@ -127,8 +128,8 @@ export class MappingForm {
       `<div class="form-group container">
 				<div class="row">
 				<label class="col" for="table-name"> Table Name: </label>
-				<input id="table-name" type="text" value ="` +
-      this.sheetName +
+				<input pattern="[\\w\\d\\s-]+" id="table-name" type="text" value ="` +
+      encodeForHTML(this.sheetName) +
       `" class="col form-control bg-transparent text-light shadow-none" \\>
 				</div>
 				</div>
@@ -151,17 +152,17 @@ export class MappingForm {
         `<div class="form-group container float-right">
 					<div class="row">
 					<label class="col d-flex justify-content-end" for="` +
-        columnID +
+        encodeForHTML(columnID) +
         `">` +
-        column +
+        encodeForHTML(column) +
         `</label>
 					<select id="` +
-        columnID +
+        encodeForHTML(columnID) +
         `" class="col form-control bg-transparent text-light shadow-none">` +
         columnDataType +
         `</select>
 					<!--<input id="` +
-        column +
+        encodeForHTML(column) +
         `" type="checkbox" class="col form-control bg-transparent text-light shadow-none" style="margin-left:10px" \\>-->
 					</div>
 					</div>`;
@@ -254,17 +255,21 @@ export class MappingForm {
         var excelColumn = await store.getColumnMapping(this.tableName, currentColumn);
         //Add selected
         if (excelColumn == column) {
-          str += `<option selected>` + column + "</option>";
+          str += `<option selected>` + encodeForHTML(column) + "</option>";
         } else {
-          str += `<option>` + column + "</option>";
+          str += `<option>` + encodeForHTML(column) + "</option>";
         }
         return str;
       });
 
       return await optionStr[options.length - 1];
     }
-    options.map(async (option) => {
-      str += `<option selected>` + option + "</option>";
+    options.map(async (option, i) => {
+      if (i == 0) {
+        str += `<option selected>` + encodeForHTML(option) + "</option>";
+      } else {
+        str += `<option>` + encodeForHTML(option) + "</option>";
+      }
     });
 
     return str;

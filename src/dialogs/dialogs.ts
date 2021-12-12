@@ -28,11 +28,15 @@ export function closeSuccessDialog(data: any) {
 }
 
 export function getDialogData(key: string): any {
-  const dataStr = localStorage.getItem(key);
-  if (dataStr) {
-    localStorage.removeItem(key);
-    const data = JSON.parse(dataStr);
-    return data;
+  try {
+    const dataStr = localStorage.getItem(key);
+    if (dataStr) {
+      localStorage.removeItem(key);
+      const data = JSON.parse(dataStr);
+      return data;
+    }
+  } catch (e) {
+    alerts.error(e);
   }
 }
 
@@ -58,20 +62,24 @@ export function showDialog<TOutputData>(url: string, opts: DialogOptions, data?:
       dialog.addEventHandler(
         Office.EventType.DialogMessageReceived,
         (args: { message: string | boolean } | { error: number }) => {
-          const dialogResult = JSON.parse(args + "");
-          switch (dialogResult.result) {
-            case DialogEvent.Ok: {
-              dialog.close();
-              const jwtInput = dialogResult.data as TOutputData;
-              resolve(jwtInput);
-              break;
-            }
+          try {
+            const dialogResult = JSON.parse(args + "");
+            switch (dialogResult.result) {
+              case DialogEvent.Ok: {
+                dialog.close();
+                const jwtInput = dialogResult.data as TOutputData;
+                resolve(jwtInput);
+                break;
+              }
 
-            case DialogEvent.Cancel: {
-              dialog.close();
-              reject();
-              break;
+              case DialogEvent.Cancel: {
+                dialog.close();
+                reject();
+                break;
+              }
             }
+          } catch (e) {
+            alerts.error(e);
           }
         }
       );
@@ -106,20 +114,24 @@ export function showPKDialog<TOutputData>(url: string, opts: DialogOptions, data
       dialog.addEventHandler(
         Office.EventType.DialogMessageReceived,
         (args: { message: string | boolean } | { error: number }) => {
-          const dialogResult = JSON.parse(args + "");
-          switch (dialogResult.result) {
-            case DialogEvent.Ok: {
-              dialog.close();
-              const primaryKeyInput = dialogResult.data as TOutputData;
-              resolve(primaryKeyInput);
-              break;
-            }
+          try {
+            const dialogResult = JSON.parse(args + "");
+            switch (dialogResult.result) {
+              case DialogEvent.Ok: {
+                dialog.close();
+                const primaryKeyInput = dialogResult.data as TOutputData;
+                resolve(primaryKeyInput);
+                break;
+              }
 
-            case DialogEvent.Cancel: {
-              dialog.close();
-              reject();
-              break;
+              case DialogEvent.Cancel: {
+                dialog.close();
+                reject();
+                break;
+              }
             }
+          } catch (e) {
+            alerts.error(e);
           }
         }
       );

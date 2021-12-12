@@ -71,7 +71,7 @@ class ProvideClientImpl implements ProvideClient {
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
   private scheme = "https";
-  private host = "0.pgrok.provide.services:33187";
+  private host = "0.pgrok.provide.services:43619";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -140,9 +140,9 @@ class ProvideClientImpl implements ProvideClient {
   async getWorkgroupMappings(appId: string): Promise<Mapping[]> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.fetchMappings({ workgroup_id: appId });
+      return await baselineService.fetchMappings({ workgroup_id: appId });
     });
     return retVal["results"];
   }
@@ -150,27 +150,27 @@ class ProvideClientImpl implements ProvideClient {
   async updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    await this._orgAuthContext.get((accessToken) => {
+    await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.updateMapping(mappingId, params);
+      return await baselineService.updateMapping(mappingId, params);
     });
   }
 
   async createWorkgroupMapping(params: any): Promise<void> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    await this._orgAuthContext.get((accessToken) => {
+    await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.createMapping(params);
+      return await baselineService.createMapping(params);
     });
   }
 
   async sendCreateProtocolMessage(message: Object): Promise<BaselineResponse> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.createObject(message);
+      return await baselineService.createObject(message);
     });
     return retVal;
   }
@@ -178,9 +178,9 @@ class ProvideClientImpl implements ProvideClient {
   async sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.updateObject(baselineID, message);
+      return await baselineService.updateObject(baselineID, message);
     });
     return retVal;
   }
@@ -188,9 +188,9 @@ class ProvideClientImpl implements ProvideClient {
   async getWorkflows(appId: string): Promise<Workflow[]> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.fetchWorkflows({ workgroup_id: appId, filter_instances: true });
+      return await baselineService.fetchWorkflows({ workgroup_id: appId, filter_instances: true });
     });
     return retVal["results"];
   }
@@ -198,9 +198,9 @@ class ProvideClientImpl implements ProvideClient {
   async createWorkflow(params: any): Promise<Workflow> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.createWorkflow(params);
+      return await baselineService.createWorkflow(params);
     });
     return retVal;
   }
@@ -208,9 +208,9 @@ class ProvideClientImpl implements ProvideClient {
   async getWorksteps(workflowId: string): Promise<Workstep[]> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.fetchWorksteps(workflowId);
+      return await baselineService.fetchWorksteps(workflowId);
     });
     return retVal["results"];
   }
@@ -218,20 +218,19 @@ class ProvideClientImpl implements ProvideClient {
   async getWorkstepDetails(workflowId: string, workstepId: string): Promise<Workstep> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.fetchWorkstepDetails(workflowId, workstepId);
+      return await baselineService.fetchWorkstepDetails(workflowId, workstepId);
     });
     return retVal;
   }
 
-  //TODO:
   async createWorkstep(workflowId: string, params: any): Promise<Workstep> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get((accessToken) => {
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return baselineService.createWorkstep(workflowId, params);
+      return await baselineService.createWorkstep(workflowId, params);
     });
     return retVal;
   }
