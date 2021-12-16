@@ -9,7 +9,7 @@ Shuttle-Excel is a connector for Microsoft Excel that allows Excel sheets to con
 
 ## Installation
 
-Clone the Shuttle-Excel repo [repo](https://github.com/provideplatform/shuttle-excel). Go to the folder named "shuttle-excel" in your terminal and run the following command to install all the node modules.
+Clone the Baseline Protocol [repo](https://github.com/eea-oasis/baseline). The Excel-Addin is located in the baseline/examples/bri-1/lib/excel-connector. Go to the folder and run the following command to install all the node modules.
 
 ```bash
 npm i
@@ -25,7 +25,7 @@ prvd authenticate
 prvd baseline stack run
 ```
 
-In a new terminal window, go to the "shuttle-excel" folder and run the following command. This will open up an Excel sheet with the Excel Addin.
+In a new terminal window, go to the baseline/examples/bri-1/lib/excel-connector folder and run the following command. This will open up an Excel sheet with the Excel Addin.
 
 ```bash
 npm start
