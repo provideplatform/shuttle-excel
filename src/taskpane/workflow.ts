@@ -1,5 +1,5 @@
-export class WorkflowForm {
-  async showForm(): Promise<void> {
+export class MyWorkflow {
+  async showCreateWorkflowForm(): Promise<void> {
     var workflowForm = document.getElementById("workflow-form-options");
     document.getElementById("workflow-form-header").innerHTML = "Create New Workflow";
 
@@ -21,4 +21,4 @@ export class WorkflowForm {
   }
 }
 
-export const workflowForm = new WorkflowForm();
+export const myWorkflow = new MyWorkflow();

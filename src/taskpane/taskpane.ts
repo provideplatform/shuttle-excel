@@ -11,7 +11,7 @@ import { store } from "../settings/store";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
-import { workflowForm } from "./createWorkflowForm";
+import { myWorkflow } from "./workflow";
 import { myWorkstep } from "./workstep";
 import * as $ from "jquery";
 
@@ -388,7 +388,7 @@ async function createWorkflow(workgroupId: string): Promise<void> {
     getMyWorkflows(workgroupId);
   });
 
-  workflowForm.showForm();
+  myWorkflow.showCreateWorkflowForm();
 }
 
 async function onSubmitCreateWorkflowForm(): Promise<unknown> {
