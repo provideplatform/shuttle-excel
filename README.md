@@ -25,7 +25,7 @@ prvd authenticate
 prvd baseline stack run
 ```
 
-In a new terminal window, go to the baseline/examples/bri-1/lib/excel-connector folder and run the following command. This will open up an Excel sheet with the Excel Addin.
+In a new terminal window, go to the folder named shuttle-excel and run the following command. This will open up an Excel sheet with the Excel Addin.
 
 ```bash
 npm start
