@@ -14,7 +14,7 @@ export class LoginFormData implements AuthParams {
   }
 
   isValid(): boolean | string {
-    var emailFormat = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+    var emailFormat = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,9})+$/;
     var passwordFormat = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[$@$!%*#?&])*[A-Za-z\d$@$!%*#?&]{8,}$/;
 
     if (!this.email || !this.password) {
