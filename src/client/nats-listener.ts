@@ -2,7 +2,8 @@ import * as natsutil from "ts-natsutil";
 export class NatsClientFacade {
   public static readonly DEFAULT_SCHEME = "wss";
   //public static readonly DEFAULT_HOST = 'provide.services';
-  public static readonly DEFAULT_HOST = "localhost:4221";
+  //Change the Host as per the stack
+  public static readonly DEFAULT_HOST = "0.pgrok.provide.services:41185";
   public static readonly DEFAULT_PATH = "";
   private readonly bearerToken?: string;
   private readonly natsUrl: string;
