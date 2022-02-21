@@ -275,7 +275,6 @@ class IndexedDBSettings {
       console.log("Key not found", key);
     }
     await store.delete(key);
-    console.log("Data Deleted", key);
     return;
   }
 }

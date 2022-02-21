@@ -4,6 +4,7 @@ import { inboundMessage } from "./inbound";
 import { onError } from "../common/common";
 import { ProvideClient } from "src/client/provide-client";
 import { NatsClientFacade as NatsClient } from "../client/nats-listener";
+// eslint-disable-next-line no-unused-vars
 import { ProtocolMessage } from "../models/protocolMessage";
 import { MappingForm } from "../taskpane/mappingForm";
 
@@ -56,23 +57,6 @@ export class Baseline {
       //Set Provide client for sending messages
       this._identClient = identClient;
 
-      /*var data = {};
-      data["Col 1"] = "West";
-
-      const test = {
-        baselineID: "89455b85-6fefc-4aec-a40d-551gggfdfdsffdsfdhgfdfsdffdsgf0b13chdsa6",
-        id: "574733322",
-        type: "general_consistency",
-        payload: {
-          id: "574733322",
-          data: data,
-        },
-      };
-      Excel.run((context: Excel.RequestContext) => {
-        inboundMessage.updateExcelTable(context, test);
-        return context.sync();
-      });*/
-
       //Connect to Nats for receiving messages
       if (!this._natsClient) {
         //PROBLEM
@@ -100,9 +84,25 @@ export class Baseline {
 
   receiveMessage(): void {
     try {
-      this._natsClient.subscribe("baseline.>", (msg: ProtocolMessage) => {
+      this._natsClient.subscribe("baseline.>", (baselineMessage) => {
+        baselineMessage = JSON.parse(baselineMessage.data);
+        if (baselineMessage.opcode != "BLINE") {
+          return;
+        }
+        const msg = {
+          baselineID: baselineMessage.baseline_id,
+          id: baselineMessage.identifier,
+          type: baselineMessage.type,
+          payload: {
+            id: "",
+            data: baselineMessage.payload.object,
+          },
+        };
+        console.log(msg);
         Excel.run((context: Excel.RequestContext) => {
-          inboundMessage.updateExcelTable(context, msg);
+          if (msg.constructor == Object) {
+            inboundMessage.updateExcelTable(context, msg);
+          }
           return context.sync();
         }).catch(this.catchError);
       });

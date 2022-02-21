@@ -61,7 +61,7 @@ export interface ProvideClient {
   createWorkstep(workflowId: string, params: any): Promise<Workstep>;
 
   // eslint-disable-next-line no-unused-vars
-  createWorkgroupMapping(params: any): Promise<void>;
+  createWorkgroupMapping(params: any): Promise<Mapping>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -71,7 +71,7 @@ class ProvideClientImpl implements ProvideClient {
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
   private scheme = "https";
-  private host = "0.pgrok.provide.services:37517";
+  private host = "0.pgrok.provide.services:40339";
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -156,13 +156,14 @@ class ProvideClientImpl implements ProvideClient {
     });
   }
 
-  async createWorkgroupMapping(params: any): Promise<void> {
+  async createWorkgroupMapping(params: any): Promise<Mapping> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
-    await this._orgAuthContext.get(async (accessToken) => {
+    const retval = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return await baselineService.createMapping(params);
     });
+    return retval;
   }
 
   async sendCreateProtocolMessage(message: Object): Promise<BaselineResponse> {

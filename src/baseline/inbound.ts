@@ -16,8 +16,7 @@ export class InBound {
     var tableName = await excelHandler.getSheetName(context);
 
     var primaryKeyColumnName = await store.getPrimaryKeyField(tableName);
-    //dataColumn - Can be retrieved from the message received or from my own indexed database
-    //TO SECURE --> Validate msg
+
     var dataColumn = Object.keys(msg.payload.data)[0];
     var address;
     var id;
@@ -25,7 +24,6 @@ export class InBound {
     var idExists = await store.keyExists(tableName, msg.baselineID, "In");
 
     var primaryKeyColumnAddress = await excelHandler.getSheetColumnAddress(context, primaryKeyColumnName);
-    console.log(idExists);
 
     if (!idExists) {
       id = await this.generateNewPrimaryKeyID(context, primaryKeyColumnAddress);
@@ -38,12 +36,9 @@ export class InBound {
       await this.addNewIDToTable(context, id, primaryKeyColumnAddress);
 
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
-
-      console.log(address);
     } else {
       id = (await store.getPrimaryKeyId(tableName, msg.baselineID))[0];
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
-      console.log(address);
     }
 
     var range = context.workbook.worksheets.getActiveWorksheet().getRange(address);
@@ -81,15 +76,13 @@ export class InBound {
   }
 
   private async addNewIDToTable(context: Excel.RequestContext, newID: string, primaryKeyColumn: string): Promise<void> {
-    console.log("inside");
-    console.log(primaryKeyColumn);
     let originalRange = context.workbook.worksheets
       .getActiveWorksheet()
       .getRange(primaryKeyColumn + ":" + primaryKeyColumn)
       .getUsedRange();
 
     let expandedRange = originalRange.getResizedRange(1, 0);
-    expandedRange.copyFrom(originalRange, Excel.RangeCopyType.formats);
+    expandedRange.copyFrom(originalRange.getLastCell(), Excel.RangeCopyType.formats);
     let lastCell = expandedRange.getLastCell();
     lastCell.values = [[newID]];
 
