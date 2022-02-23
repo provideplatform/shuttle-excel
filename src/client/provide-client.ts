@@ -18,6 +18,7 @@ import * as jwt from "jsonwebtoken";
 import { AuthContext } from "./auth-context";
 import { AccessToken } from "./access-token";
 import { NatsClientFacade as NatsClient } from "./nats-listener";
+import { PROVIDE_CLIENT_PORT } from "../../config.json";
 
 import { Token as _Token } from "../models/token";
 import { ServerUser as _User, User } from "../models/user";
@@ -71,7 +72,7 @@ class ProvideClientImpl implements ProvideClient {
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
   private scheme = "https";
-  private host = "0.pgrok.provide.services:40339";
+  private host = `0.pgrok.provide.services:${PROVIDE_CLIENT_PORT}`;
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
