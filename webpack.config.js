@@ -3,6 +3,7 @@ const devCerts = require("office-addin-dev-certs");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 const urlDev = "https://localhost:3000/";
 const urlProd = "https://localhost:3000/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
@@ -10,6 +11,7 @@ const urlProd = "https://localhost:3000/"; // CHANGE THIS TO YOUR PRODUCTION DEP
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
   const buildType = dev ? "dev" : "prod";
+  console.log(env);
   const config = {
     devtool: "source-map",
     entry: {
@@ -73,6 +75,11 @@ module.exports = async (env, options) => {
     },
     plugins: [
       new CleanWebpackPlugin(),
+      new webpack.DefinePlugin({
+        BASELINE_API_URL: JSON.stringify(`${env.BASELINE_API_URL}`),
+        WEBSOCKET_URL: JSON.stringify(`${env.WEBSOCKET_URL}`),
+        IDENT_URL: JSON.stringify(`${env.IDENT_URL}`),
+      }),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
@@ -134,7 +141,6 @@ module.exports = async (env, options) => {
       os: true,
       path: true,
       stream: true,
-      process: true,
 
       // NOTE: To avoid - Module not found: Error: Can't resolve 'fs' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
       fs: "empty",

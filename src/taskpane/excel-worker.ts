@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // NOTE: Logic of working with Excel
 
-import { Application, Workflow, Workstep } from "@provide/types";
+import { Application, Workflow, Workstep, Organization } from "@provide/types";
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
@@ -12,6 +13,20 @@ import { encodeForHTML } from "../common/validate";
 
 export class ExcelWorker {
   identClient: ProvideClient | null;
+
+  async showOrganizations(organizations: Organization[]): Promise<void> {
+    var completelist = document.getElementById("organizations-list");
+    completelist.innerHTML = "";
+
+    organizations.map((organization) => {
+      completelist.innerHTML +=
+        `<button type="button" class="list-group-item list-group-item-action" id="` +
+        encodeForHTML(organization.id) +
+        `">` +
+        encodeForHTML(organization.name) +
+        `</button>`;
+    });
+  }
 
   async showWorkgroups(sheetName: string, applications: Application[]): Promise<void> {
     var completelist = document.getElementById("workgroups-list");

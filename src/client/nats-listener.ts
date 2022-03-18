@@ -1,10 +1,10 @@
 import * as natsutil from "ts-natsutil";
-import { NATS_CLIENT_PORT } from "../../config.json";
 export class NatsClientFacade {
   public static readonly DEFAULT_SCHEME = "wss";
   //public static readonly DEFAULT_HOST = 'provide.services';
   //Change the Host as per the stack
-  public static readonly DEFAULT_HOST = `0.pgrok.provide.services:${NATS_CLIENT_PORT}`;
+  // eslint-disable-next-line no-undef
+  public static readonly DEFAULT_HOST = `${WEBSOCKET_URL}`;
   public static readonly DEFAULT_PATH = "";
   private readonly bearerToken?: string;
   private readonly natsUrl: string;
