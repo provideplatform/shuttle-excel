@@ -1,9 +1,9 @@
 /* eslint-disable no-undef */
-
 const devCerts = require("office-addin-dev-certs");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const webpack = require("webpack");
 
 const urlDev = "https://localhost:3000/";
 const urlProd = "https://localhost:3000/"; // CHANGE THIS TO YOUR PRODUCTION DEPLOYMENT LOCATION
@@ -11,6 +11,7 @@ const urlProd = "https://localhost:3000/"; // CHANGE THIS TO YOUR PRODUCTION DEP
 module.exports = async (env, options) => {
   const dev = options.mode === "development";
   const buildType = dev ? "dev" : "prod";
+  console.log(env);
   const config = {
     devtool: "source-map",
     entry: {
@@ -21,7 +22,10 @@ module.exports = async (env, options) => {
       primaryKeyDialog: "./src/dialogs/primaryKeyDialog.ts",
     },
     resolve: {
-      extensions: [".css", ".ts", ".tsx", ".html", ".js"]
+      extensions: [".css", ".ts", ".tsx", ".html", ".js"],
+      alias: {
+        process: "process/browser",
+      },
     },
     module: {
       rules: [
@@ -30,18 +34,15 @@ module.exports = async (env, options) => {
           use: ["style-loader", "css-loader"],
         },
         {
-            test: /\.m?js$/,
-            exclude: [
-                /node_modules[\\/]core-js/,
-                /node_modules[\\/]webpack[\\/]buildin/,
-            ],
-            use: {
-              loader: 'babel-loader',
-              options: {
-                presets: ['@babel/preset-env'],
-                plugins: ['@babel/plugin-transform-runtime']
-              }
-            }
+          test: /\.m?js$/,
+          exclude: [/node_modules[\\/]core-js/, /node_modules[\\/]webpack[\\/]buildin/],
+          use: {
+            loader: "babel-loader",
+            options: {
+              presets: ["@babel/preset-env"],
+              plugins: ["@babel/plugin-transform-runtime"],
+            },
+          },
         },
         {
           test: /\.ts$/,
@@ -49,31 +50,36 @@ module.exports = async (env, options) => {
           use: {
             loader: "babel-loader",
             options: {
-              presets: ['@babel/preset-typescript']
-            }
-          }
+              presets: ["@babel/preset-typescript"],
+            },
+          },
         },
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
-          use: "ts-loader"
+          use: "ts-loader",
         },
         {
           test: /\.html$/,
           exclude: /node_modules/,
-          use: "html-loader"
+          use: "html-loader",
         },
         {
           test: /\.(png|jpg|jpeg|gif)$/,
           loader: "file-loader",
           options: {
-            name: '[path][name].[ext]'
-          }
-        }
-      ]
+            name: "[path][name].[ext]",
+          },
+        },
+      ],
     },
     plugins: [
       new CleanWebpackPlugin(),
+      new webpack.DefinePlugin({
+        BASELINE_API_URL: JSON.stringify(`${env.BASELINE_API_URL}`),
+        WEBSOCKET_URL: JSON.stringify(`${env.WEBSOCKET_URL}`),
+        IDENT_URL: JSON.stringify(`${env.IDENT_URL}`),
+      }),
       new HtmlWebpackPlugin({
         filename: "taskpane.html",
         template: "./src/taskpane/taskpane.html",
@@ -81,67 +87,68 @@ module.exports = async (env, options) => {
       }),
       new CopyWebpackPlugin({
         patterns: [
-        // NOTE: Don't need because use import "./taskpane.css" in taskpane.ts and ...
-        // {
-        //   to: "taskpane.css",
-        //   from: "./src/taskpane/taskpane.css"
-        // },
-        {
-          to: "[name]." + buildType + ".[ext]",
-          from: "manifest*.xml",
-          transform(content) {
-            if (dev) {
-              return content;
-            } else {
-              return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
-            }
-          }
-        }
-      ]}),
+          // NOTE: Don't need because use import "./taskpane.css" in taskpane.ts and ...
+          // {
+          //   to: "taskpane.css",
+          //   from: "./src/taskpane/taskpane.css"
+          // },
+          {
+            to: "[name]." + buildType + ".[ext]",
+            from: "manifest*.xml",
+            transform(content) {
+              if (dev) {
+                return content;
+              } else {
+                return content.toString().replace(new RegExp(urlDev, "g"), urlProd);
+              }
+            },
+          },
+        ],
+      }),
       new HtmlWebpackPlugin({
         filename: "jwtInputDialog.html",
         template: "./src/dialogs/jwtInputDialog.html",
-        chunks: ["polyfill", "jwtInputDialog"]
+        chunks: ["polyfill", "jwtInputDialog"],
       }),
       new HtmlWebpackPlugin({
         filename: "primaryKeyDialog.html",
         template: "./src/dialogs/primaryKeyDialog.html",
-        chunks: ["polyfill", "primaryKeyDialog"]
+        chunks: ["polyfill", "primaryKeyDialog"],
       }),
       new HtmlWebpackPlugin({
         filename: "commands.html",
         template: "./src/commands/commands.html",
-        chunks: ["polyfill", "commands"]
-      })
+        chunks: ["polyfill", "commands"],
+      }),
     ],
     devServer: {
       hot: false,
       inline: false,
       liveReload: false,
       headers: {
-        "Access-Control-Allow-Origin": "*"
-      },      
-      https: (options.https !== undefined) ? options.https : await devCerts.getHttpsServerOptions(),
-      port: process.env.npm_package_config_dev_server_port || 3000
+        "Access-Control-Allow-Origin": "*",
+      },
+      https: options.https !== undefined ? options.https : await devCerts.getHttpsServerOptions(),
+      port: process.env.npm_package_config_dev_server_port || 3000,
     },
     optimization: {
-        // We no not want to minimize our code.
-        minimize: false,
+      // We no not want to minimize our code.
+      minimize: false,
     },
     node: {
-        buffer: true,
-        crypto: true,
-        os: true,
-        path: true,
-        stream: true,
-  
-        // NOTE: To avoid - Module not found: Error: Can't resolve 'fs' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
-        fs: "empty",
-        // NOTE: To avoid - Module not found: Error: Can't resolve 'net' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
-        net: "empty",
-        // NOTE: To avoid - Module not found: Error: Can't resolve 'tls' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
-        tls: "empty",
-    }
+      buffer: true,
+      crypto: true,
+      os: true,
+      path: true,
+      stream: true,
+
+      // NOTE: To avoid - Module not found: Error: Can't resolve 'fs' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
+      fs: "empty",
+      // NOTE: To avoid - Module not found: Error: Can't resolve 'net' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
+      net: "empty",
+      // NOTE: To avoid - Module not found: Error: Can't resolve 'tls' in 'C:\Work\EnvisionBlockchain\shuttle-excel\Repo\ShuttleExcel\node_modules\ts-nats\lib'
+      tls: "empty",
+    },
   };
 
   return config;

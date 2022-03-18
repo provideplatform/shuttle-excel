@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // eslint-disable-next-line no-unused-vars
 import { ProvideClient, authenticate, authenticateStub, restore, restoreStub } from "../client/provide-client";
 // eslint-disable-next-line no-unused-vars
-import { Application, Mapping, MappingField, MappingModel, Workflow, Workstep } from "@provide/types";
+import { Application, Mapping, MappingField, MappingModel, Workflow, Workstep, Organization } from "@provide/types";
 import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
@@ -41,7 +42,6 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     $(function () {
       initUi();
-
       tryRestoreAutorization();
     });
   }
@@ -76,6 +76,7 @@ function tryRestoreAutorization() {
 function initUi() {
   $("#login-btn").on("click", onLogin);
   $("#logout-btn").on("click", onLogout);
+  $("#refresh-organizations-btn").on("click", onFillOrganizations);
   $("#refresh-workgroups-btn").on("click", onFillWorkgroups);
   $("#refresh-workflows-btn").on("click", onFillWorkflows);
   $("#refresh-worksteps-btn").on("click", onFillWorksteps);
@@ -99,6 +100,24 @@ function setUiAfterLogin() {
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
   $("#login-ui").hide();
+  $("#organization-ui").show();
+  $workUi.hide();
+  $("#mapping-ui").hide();
+  $("#workflow-ui").hide();
+  $("#workflow-create-ui").hide();
+  $("#workstep-ui").hide();
+  $("#workstep-create-ui").hide();
+  $("#workstep-details-ui").hide();
+  $("#app-body").show();
+}
+
+function setUiforWorkgroups() {
+  $("#sideload-msg").hide();
+  let $workUi = $("#workgroup-ui");
+  const userName = (identClient.user || {}).name || "unknow";
+  $("#user-name", $workUi).text(userName);
+  $("#login-ui").hide();
+  $("#organization-ui").hide();
   $workUi.show();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
@@ -115,6 +134,7 @@ function setUiForMapping() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").show();
   $("#workflow-ui").hide();
@@ -131,6 +151,7 @@ function setUiForWorkflows() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#workflow-ui").show();
   $("#mapping-ui").hide();
@@ -147,6 +168,7 @@ function setUiForCreateWorkflow() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
@@ -163,6 +185,7 @@ function setUiForWorksteps() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
@@ -179,6 +202,7 @@ function setUiForCreateWorkstep() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
@@ -195,6 +219,7 @@ function setUiForWorkStepDetails() {
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
   $("#user-name", $workUi).text(userName);
+  $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
@@ -230,7 +255,7 @@ async function onLogin(): Promise<void> {
       await store.removeTokenAndUser();
       return store.setTokenAndUser(token, user).then(spinnerOff);
     }, onError)
-    .then(getMyWorkgroups)
+    .then(getMyOrganizations)
     .then(startBaselining);
 }
 
@@ -246,6 +271,10 @@ function onLogout() {
       setUiForLogin();
       spinnerOff();
     }, onError);
+}
+
+function onFillOrganizations(): Promise<unknown> {
+  return getMyOrganizations();
 }
 
 function onFillWorkgroups(): Promise<unknown> {
@@ -292,13 +321,45 @@ function onGetJwtokenDialog() {
   );
 }
 
+function getMyOrganizations(): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+  console.log("getMyOrganizations");
+  setUiAfterLogin();
+  return identClient.getOrganizations().then(async (organizations) => {
+    await excelWorker.showOrganizations(organizations);
+    return await activateOrganizationButtons(organizations).then(spinnerOff);
+  }, onError);
+}
+
+async function activateOrganizationButtons(organizations: Organization[]): Promise<void> {
+  organizations.map((organization) => {
+    //Get the buttons elements
+    $("#" + organization.id).on("click", function () {
+      getMyWorkgroups();
+    });
+    //Add Events to it
+  });
+}
+
 function getMyWorkgroups(): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
   }
 
-  setUiAfterLogin();
+  setUiforWorkgroups();
+
+  //Prepare back button
+  $("#workgroup-back-btn").on("click", function () {
+    getMyOrganizations();
+  });
+
+  //Prepare logout button
+  $("#workgroup-ui #logout-btn").on("click", onLogout);
+
   return identClient.getWorkgroups().then(async (apps) => {
     await excelWorker.showWorkgroups("My Workgroups", apps);
     return await activateWorkgroupButtons(apps).then(spinnerOff);

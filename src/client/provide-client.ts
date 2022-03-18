@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Application,
   Contract,
@@ -28,6 +29,8 @@ export interface ProvideClient {
   natsClient: NatsClient | null;
 
   logout(): Promise<void>;
+
+  getOrganizations(): Promise<Organization[]>;
 
   getWorkgroups(): Promise<Application[]>;
 
@@ -70,8 +73,9 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
-  private scheme = "https";
-  private host = "0.pgrok.provide.services:40339";
+  private scheme = "http";
+  // eslint-disable-next-line no-undef
+  private host = `${BASELINE_API_URL}`;
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -128,8 +132,20 @@ class ProvideClientImpl implements ProvideClient {
     });
   }
 
+  async getOrganizations(): Promise<Application[]> {
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    const retVal = await this._orgAuthContext.get((accessToken) => {
+      const identService = identClientFactory(accessToken);
+      return identService.fetchOrganizations({});
+    });
+    return retVal.results;
+  }
+
   async getWorkgroups(): Promise<Application[]> {
-    const retVal = await this._userAuthContext.get((accessToken) => {
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    const retVal = await this._orgAuthContext.get((accessToken) => {
       const identService = identClientFactory(accessToken);
       //TODO: Change to baselineSerive.fetchWorkgroups()
       return identService.fetchApplications({});
