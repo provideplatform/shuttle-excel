@@ -58,7 +58,6 @@
       </div> 
       <div id="organization-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none">
         <div class="card-header border-0 bg-transparent">
-          <div id="user-name" class="text-truncate"></div>
         </div>
         <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left">
           <div class="h3"> Organizations
@@ -67,9 +66,11 @@
           </div>
           <div id="organizations-list" class="list-group">
           </div>
+          <div id="organizations-list-paginator" class="paginator d-flex justify-content-center"></div>
         </div>
   
         <div class="card-footer border-0 bg-transparent container text-muted">
+          <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
           <div class="row text-monospace">
             <div class="col text-truncate">2021 Provide</div>
             <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -81,7 +82,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="workgroup-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
           aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left">
         <div class="h3"> Workgroups
@@ -90,6 +90,7 @@
         </div>
         <div id="workgroups-list" class="list-group">
         </div>
+        <div id="workgroups-list-paginator" class="paginator d-flex justify-content-center"></div>
         <div>
           <button id="show-jwt-input-btn" class="btn btn-primary btn-sm float-right">Accept Workgroup
             invitation</button>
@@ -100,6 +101,7 @@
       </div>
 
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -110,7 +112,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="workflow-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
 
       <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left">
@@ -119,8 +120,9 @@
           <button id="refresh-workflows-btn" class="btn-sm btn-secondary"
             style="background-color: transparent; border: transparent;"><i class="fa">&#xf021;</i></button>
         </div>
-        <div id="workflows-list" class="list-group">
+        <div id="workflows-list" class="content list-group">
         </div>
+        <div id="workflows-list-paginator" class="paginator d-flex justify-content-center"></div> 
         <div>
           <button id="create-workflow" class="btn btn-primary btn-sm float-right">Create</button>
         </div>
@@ -130,6 +132,7 @@
       </div>
 
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -142,7 +145,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="create-workflow-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div id="workflow-create-form" class="card-body border-0 bg-transparent container text-truncate text-md-left"
         style="overflow:auto;">
@@ -159,6 +161,7 @@
         </form>
       </div>
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -171,21 +174,22 @@
       <div class="card-header border-0 bg-transparent">
         <button id="workstep-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left">
         <div class="h3"> Worksteps
           <button id="refresh-worksteps-btn" class="btn-sm btn-secondary"
             style="background-color: transparent; border: transparent;"><i class="fa">&#xf021;</i></button>
         </div>
-        <div id="worksteps-list" class="list-group">
+        <div id="worksteps-list" class="content list-group">
         </div>
+        <div id="worksteps-list-paginator" class="paginator d-flex justify-content-center"></div> 
         <div>
           <button id="create-workstep" class="btn btn-primary btn-sm float-right">Create</button>
         </div>
       </div>
 
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -198,7 +202,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="create-workstep-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div id="workstep-create-form" class="card-body border-0 bg-transparent container text-truncate text-md-left"
         style="overflow:auto;">
@@ -215,6 +218,7 @@
         </form>
       </div>
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -227,7 +231,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="workstep-details-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left" style="overflow:auto;">
         <div class="h3"> Workstep Details
@@ -238,6 +241,7 @@
         </table>
       </div>
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
@@ -249,7 +253,6 @@
       <div class="card-header border-0 bg-transparent">
         <button id="mapping-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
             aria-hidden="true"></i></button>
-        <div id="user-name" class="text-truncate"></div>
       </div>
       <div id="mapping-form" class="card-body border-0 bg-transparent container text-truncate text-md-left"
         style="overflow:auto;">
@@ -265,6 +268,7 @@
         </form>
       </div>
       <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
         <div class="row text-monospace">
           <div class="col text-truncate">2021 Provide</div>
           <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>

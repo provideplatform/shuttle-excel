@@ -98,7 +98,7 @@ function setUiAfterLogin() {
   $("#sideload-msg").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#organization-ui").text(userName);
   $("#login-ui").hide();
   $("#organization-ui").show();
   $workUi.hide();
@@ -133,7 +133,7 @@ function setUiForMapping() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#mapping-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").show();
@@ -150,7 +150,7 @@ function setUiForWorkflows() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#workflow-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#workflow-ui").show();
@@ -167,7 +167,7 @@ function setUiForCreateWorkflow() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#workflow-create-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
@@ -184,7 +184,7 @@ function setUiForWorksteps() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#workstep-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
@@ -201,7 +201,7 @@ function setUiForCreateWorkstep() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#workstep-create-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
@@ -218,7 +218,7 @@ function setUiForWorkStepDetails() {
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
   const userName = (identClient.user || {}).name || "unknow";
-  $("#user-name", $workUi).text(userName);
+  $("#user-name", "#workstep-details-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#mapping-ui").hide();
@@ -326,7 +326,6 @@ function getMyOrganizations(): Promise<void> {
     setUiForLogin();
     return;
   }
-  console.log("getMyOrganizations");
   setUiAfterLogin();
   return identClient.getOrganizations().then(async (organizations) => {
     await excelWorker.showOrganizations(organizations);

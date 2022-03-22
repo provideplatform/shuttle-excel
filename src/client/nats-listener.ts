@@ -26,7 +26,7 @@ export class NatsClientFacade {
     path?: string
   ) {
     this.bearerToken = bearerToken;
-    this.natsUrl = `${scheme}://${host}/${path ? `${path}/` : ""}`;
+    this.natsUrl = `${scheme}:${host}/${path ? `${path}/` : ""}`;
   }
 
   //TODO : Need to check the Nats service factory --> NatsService/NatsWS implements INatsService

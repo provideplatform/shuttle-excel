@@ -73,7 +73,7 @@ class ProvideClientImpl implements ProvideClient {
   private _appAuthContext: AuthContext;
   private _orgAuthContext: AuthContext;
   private _NatsClient: NatsClient;
-  private scheme = "http";
+  private scheme = "https";
   // eslint-disable-next-line no-undef
   private host = `${BASELINE_API_URL}`;
 

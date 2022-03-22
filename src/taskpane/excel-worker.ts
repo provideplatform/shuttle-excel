@@ -6,7 +6,7 @@ import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
 import { MappingForm } from "./mappingForm";
-import { encodeForHTML } from "../common/validate";
+import { paginate } from "../common/paginate";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension */
@@ -15,44 +15,14 @@ export class ExcelWorker {
   identClient: ProvideClient | null;
 
   async showOrganizations(organizations: Organization[]): Promise<void> {
-    var completelist = document.getElementById("organizations-list");
-    completelist.innerHTML = "";
-
-    organizations.map((organization) => {
-      completelist.innerHTML +=
-        `<button type="button" class="list-group-item list-group-item-action" id="` +
-        encodeForHTML(organization.id) +
-        `">` +
-        encodeForHTML(organization.name) +
-        `</button>`;
-    });
+    paginate(organizations, "organizations-list");
   }
 
   async showWorkgroups(sheetName: string, applications: Application[]): Promise<void> {
-    var completelist = document.getElementById("workgroups-list");
-    completelist.innerHTML = "";
-
-    applications.map((app) => {
-      completelist.innerHTML +=
-        `<button type="button" class="list-group-item list-group-item-action" id="` +
-        encodeForHTML(app.id) +
-        `">` +
-        encodeForHTML(app.name) +
-        `</button>`;
-    });
+    paginate(applications, "workgroups-list");
   }
   async showWorkflows(workflows: Workflow[]): Promise<void> {
-    var completelist = document.getElementById("workflows-list");
-    completelist.innerHTML = "";
-
-    workflows.map((workflow) => {
-      completelist.innerHTML +=
-        `<button type="button" class="list-group-item list-group-item-action" id="` +
-        encodeForHTML(workflow.id) +
-        `">` +
-        encodeForHTML(workflow.name) +
-        `</button>`;
-    });
+    paginate(workflows, "workflows-list");
   }
 
   async showMappingButton(): Promise<void> {
@@ -64,16 +34,7 @@ export class ExcelWorker {
   }
 
   async showWorksteps(worksteps: Workstep[]): Promise<void> {
-    var completelist = document.getElementById("worksteps-list");
-    completelist.innerHTML = "";
-    worksteps.map((workstep) => {
-      completelist.innerHTML +=
-        `<button type="button" class="list-group-item list-group-item-action" id="` +
-        encodeForHTML(workstep.id) +
-        `">` +
-        encodeForHTML(workstep.name) +
-        `</button>`;
-    });
+    paginate(worksteps, "worksteps-list");
   }
 
   async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {
