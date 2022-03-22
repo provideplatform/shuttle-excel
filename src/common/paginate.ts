@@ -14,15 +14,18 @@ var numberOfPages;
 
 export const paginate = (items: any[], listName: string) => {
   listArray = [];
+  var parentElement = document.getElementById(`${listName}`);
+  parentElement.innerHTML = "";
 
   items.forEach((item) => {
-    listArray.push(
-      `<button type="button" class="list-group-item list-group-item-action" id="` +
-        encodeForHTML(item.id) +
-        `">` +
-        encodeForHTML(item.name) +
-        `</button>`
-    );
+    var newButton = document.createElement("button");
+    newButton.setAttribute("type", "button");
+    newButton.setAttribute("class", "list-group-item list-group-item-action");
+    newButton.setAttribute("style", "display: none");
+    newButton.setAttribute("id", encodeForHTML(item.id));
+    newButton.textContent = item.name;
+    listArray.push(newButton);
+    parentElement.appendChild(newButton);
   });
 
   // State
@@ -79,9 +82,13 @@ function buildPage(currPage, listName) {
   const trimStart = (currPage - 1) * numberPerPage;
   const trimEnd = trimStart + numberPerPage;
 
-  var paginatedList = document.getElementById(`${listName}`);
-  var innerHTMLContent = "";
-  paginatedList.innerHTML = "";
-  listArray.slice(trimStart, trimEnd).forEach((listItem) => (innerHTMLContent += listItem));
-  paginatedList.innerHTML = innerHTMLContent;
+  var paginatedList = document.getElementById(`${listName}`).children;
+
+  for (var i = 0; i < paginatedList.length; i++) {
+    if (trimStart <= i && i < trimEnd) {
+      paginatedList[i].setAttribute("style", "");
+    } else {
+      paginatedList[i].setAttribute("style", "display: none");
+    }
+  }
 }
