@@ -31,7 +31,7 @@ export const paginate = (items: any[], listName: string) => {
   // State
   // Number of products
   numberOfItems = listArray.length;
-  numberPerPage = 1;
+  numberPerPage = 5;
   currentPage = 1;
 
   // Number of pages
