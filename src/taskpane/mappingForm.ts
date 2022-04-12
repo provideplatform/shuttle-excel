@@ -18,7 +18,7 @@ export class MappingForm {
   sheetColumnNames: String[];
   sheetColumnDataType: String[];
 
-  async showWorkgroupMappings(mappings: Mapping[]): Promise<void> {
+  async showWorkgroupMappings(mapping: Mapping): Promise<void> {
     var excelSheetName;
     var excelSheetColumnNames;
 
@@ -29,86 +29,86 @@ export class MappingForm {
 
     var mappingForm = document.getElementById("mapping-form-options");
     mappingForm.innerHTML = "";
-    mappings.map((mapping) => {
-      document.getElementById("mapping-form-header").innerHTML = "Mappings";
-      mapping.models.map(async (model) => {
-        this.tableName = mapping["name"];
-        this.primaryKey = model["primary_key"];
-        this.tableExists = await store.tableExists("tableNames", this.tableName);
 
-        var tableID = await this.trim(this.tableName);
-        var primaryKeyID = await this.trim(this.primaryKey);
+    document.getElementById("mapping-form-header").innerHTML = "Mappings";
+    var model = mapping.models[1];
+    this.tableName = mapping["name"];
+    this.primaryKey = model["primary_key"];
+    this.tableExists = await store.tableExists("tableNames", this.tableName);
 
-        var pkOptions = await this.addOptions(excelSheetColumnNames, model["primary_key"]);
-        //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
-        //TO SECURE --> Input validation
-        mappingForm.innerHTML =
-          `<div class="form-group">
+    var tableID = await this.trim(this.tableName);
+    var primaryKeyID = await this.trim(this.primaryKey);
+
+    var pkOptions = await this.addOptions(excelSheetColumnNames, model["primary_key"]);
+    //TO SECURE --> innerHTML https://newbedev.com/xss-prevention-and-innerhtml
+    //TO SECURE --> Input validation
+    mappingForm.innerHTML =
+      `<div class="form-group">
 						<label class="font-weight-normal h6" for="` +
-          encodeForHTML(tableID) +
-          `">Table Name: ` +
-          encodeForHTML(mapping["name"]) +
-          `</label>
+      encodeForHTML(tableID) +
+      `">Table Name: ` +
+      encodeForHTML(mapping["name"]) +
+      `</label>
 						<input pattern="[\\w\\d\\s-]+" id="` +
-          encodeForHTML(tableID) +
-          `" type="text" value="` +
-          encodeForHTML(excelSheetName) +
-          `" class="form-control bg-transparent text-light shadow-none"\\>
+      encodeForHTML(tableID) +
+      `" type="text" value="` +
+      encodeForHTML(excelSheetName) +
+      `" class="form-control bg-transparent text-light shadow-none"\\>
 						</div>
 						<div class="form-group">	
 						<label class="font-weight-normal h6" for="` +
-          encodeForHTML(primaryKeyID) +
-          `">` +
-          encodeForHTML(model["primary_key"]) +
-          `</label>
+      encodeForHTML(primaryKeyID) +
+      `">` +
+      encodeForHTML(model["primary_key"]) +
+      `</label>
 						<select id="` +
-          encodeForHTML(primaryKeyID) +
-          `" class="form-control bg-transparent text-light shadow-none">` +
-          pkOptions +
-          `</select>
+      encodeForHTML(primaryKeyID) +
+      `" class="form-control bg-transparent text-light shadow-none">` +
+      pkOptions +
+      `</select>
 						</div>`;
 
-        this.sheetColumnNames = [];
+    this.sheetColumnNames = [];
 
-        model["fields"].map(async (field) => {
-          //field.name
-          //field.type
+    model["fields"].map(async (field) => {
+      //field.name
+      //field.type
 
-          var columnID = await this.trim(field["name"]);
-          this.sheetColumnNames.push(field["name"]);
-          var options = await this.addOptions(excelSheetColumnNames, field["name"]);
-          mappingForm.innerHTML +=
-            `<div class="form-group container">
+      var columnID = await this.trim(field["name"]);
+      this.sheetColumnNames.push(field["name"]);
+      var options = await this.addOptions(excelSheetColumnNames, field["name"]);
+      mappingForm.innerHTML +=
+        `<div class="form-group container">
 						<div class="row">
 						<label class="col font-weight-normal h6" for="` +
-            encodeForHTML(columnID) +
-            `">` +
-            encodeForHTML(field["name"]) +
-            `<div class="text-muted font-weight-light">(` +
-            encodeForHTML(field["type"]) +
-            `)</div></label>
+        encodeForHTML(columnID) +
+        `">` +
+        encodeForHTML(field["name"]) +
+        `<div class="text-muted font-weight-light">(` +
+        encodeForHTML(field["type"]) +
+        `)</div></label>
 						<select id="` +
-            encodeForHTML(columnID) +
-            `" class="col form-control bg-transparent text-light shadow-none">` +
-            options +
-            `</select>
+        encodeForHTML(columnID) +
+        `" class="col form-control bg-transparent text-light shadow-none">` +
+        options +
+        `</select>
 						</div>
 						</div>`;
-        });
-
-        var submitButton = document.getElementById("mapping-form-btn");
-        if (this.tableExists) {
-          submitButton.innerHTML = "Baselined";
-          submitButton.style.backgroundColor = "Green";
-        } else {
-          submitButton.innerHTML = "Start Baselining";
-          submitButton.style.backgroundColor = "Red";
-        }
-      });
     });
+
+    var submitButton = document.getElementById("mapping-form-btn");
+    if (this.tableExists) {
+      submitButton.innerHTML = "Baselined";
+      submitButton.style.backgroundColor = "Green";
+    } else {
+      submitButton.innerHTML = "Start Baselining";
+      submitButton.style.backgroundColor = "Red";
+    }
+    var updateButton = document.getElementById("mapping-update-btn");
+    updateButton.setAttribute("style", "");
   }
 
-  async showUnmappedColumns(appId: string): Promise<void> {
+  async showUnmappedColumns(mapping, appId: string): Promise<void> {
     this.workgroupId = appId;
     this.sheetColumnDataType = [];
 

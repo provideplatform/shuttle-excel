@@ -79,9 +79,11 @@ function initUi() {
   $("#refresh-organizations-btn").on("click", onFillOrganizations);
   $("#refresh-workgroups-btn").on("click", onFillWorkgroups);
   $("#refresh-workflows-btn").on("click", onFillWorkflows);
+  $("#refresh-mappings-list-btn").on("click", onFillMappings);
   $("#refresh-worksteps-btn").on("click", onFillWorksteps);
   $("#show-jwt-input-btn").on("click", onGetJwtokenDialog);
   $("#mapping-form-btn").on("click", onSubmitMappingForm);
+  $("#mapping-update-btn").on("click", onSubmitMappingUpdate);
   $("#workflow-form-btn").on("click", onSubmitCreateWorkflowForm);
   $("#workstep-form-btn").on("click", onSubmitCreateWorkstepForm);
 }
@@ -102,6 +104,7 @@ function setUiAfterLogin() {
   $("#login-ui").hide();
   $("#organization-ui").show();
   $workUi.hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -119,6 +122,7 @@ function setUiforWorkgroups() {
   $("#login-ui").hide();
   $("#organization-ui").hide();
   $workUi.show();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -128,7 +132,25 @@ function setUiforWorkgroups() {
   $("#app-body").show();
 }
 
-function setUiForMapping() {
+function setUiforMappings() {
+  $("#sideload-msg").hide();
+  let $workUi = $("#workgroup-ui");
+  const userName = (identClient.user || {}).name || "unknow";
+  $("#user-name", $workUi).text(userName);
+  $("#login-ui").hide();
+  $("#organization-ui").hide();
+  $workUi.hide();
+  $("#mappings-list-ui").show();
+  $("#mapping-ui").hide();
+  $("#workflow-ui").hide();
+  $("#workflow-create-ui").hide();
+  $("#workstep-ui").hide();
+  $("#workstep-create-ui").hide();
+  $("#workstep-details-ui").hide();
+  $("#app-body").show();
+}
+
+function setUiForMappingDetails() {
   $("#sideload-msg").hide();
   $("#login-ui").hide();
   let $workUi = $("#workgroup-ui");
@@ -136,6 +158,7 @@ function setUiForMapping() {
   $("#user-name", "#mapping-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").show();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -154,6 +177,7 @@ function setUiForWorkflows() {
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
   $("#workflow-ui").show();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-create-ui").hide();
   $("#workstep-ui").hide();
@@ -170,6 +194,7 @@ function setUiForCreateWorkflow() {
   $("#user-name", "#workflow-create-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").show();
@@ -187,6 +212,7 @@ function setUiForWorksteps() {
   $("#user-name", "#workstep-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -204,6 +230,7 @@ function setUiForCreateWorkstep() {
   $("#user-name", "#workstep-create-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -221,6 +248,7 @@ function setUiForWorkStepDetails() {
   $("#user-name", "#workstep-details-ui").text(userName);
   $("#organization-ui").hide();
   $("#workgroup-ui").hide();
+  $("#mappings-list-ui").hide();
   $("#mapping-ui").hide();
   $("#workflow-ui").hide();
   $("#workflow-create-ui").hide();
@@ -283,6 +311,10 @@ function onFillWorkgroups(): Promise<unknown> {
 
 function onFillWorkflows(): Promise<unknown> {
   return getMyWorkflows(currentWorkgroupId);
+}
+
+function onFillMappings(): Promise<unknown> {
+  return getMyMappingsList(currentWorkgroupId);
 }
 
 function onFillWorksteps(): Promise<unknown> {
@@ -429,7 +461,7 @@ async function activateWorkflowCreateButton(workgroupId: string): Promise<void> 
 
 async function activateMappingButton(appId: string): Promise<void> {
   $("#mapping-btn").on("click", function () {
-    confirmMappings(appId);
+    getMyMappingsList(appId);
   });
 }
 
@@ -573,33 +605,77 @@ async function showWorkstepDetails(workstepId: string): Promise<void> {
     await myWorkstep.showWorkstepDetails(workstep);
   });
 }
-async function confirmMappings(appId: string): Promise<void> {
+
+async function getMyMappingsList(appId: string): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
   }
 
-  setUiForMapping();
+  setUiforMappings();
+
+  currentWorkgroupId = appId;
+
+  //Prepare back button
+  $("#mappings-list-back-btn").on("click", function () {
+    getMyWorkflows(appId);
+  });
+
+  //Prepare logout button
+  $("#mappings-list-ui #logout-btn").on("click", onLogout);
+
+  //Show Workflows
+  return identClient.getWorkgroupMappings(appId).then(async (mappings) => {
+    if (mappings.length > 0) {
+      await excelWorker.showMappings(mappings);
+      return await activateMappingsListButtons(mappings).then(spinnerOff);
+    }
+    spinnerOff();
+
+    return;
+  }, onError);
+}
+
+async function activateMappingsListButtons(mappings: Mapping[]): Promise<void> {
+  mappings.map((mapping) => {
+    //Get the buttons elements
+    $("#" + mapping.refMappingId).on("click", function () {
+      confirmMappings(mapping);
+    });
+  });
+}
+
+async function confirmMappings(mapping: Mapping): Promise<void> {
+  if (!identClient) {
+    setUiForLogin();
+    return;
+  }
+
+  setUiForMappingDetails();
 
   //Prepare back button
   $("#mapping-back-btn").on("click", function () {
-    getMyWorkflows(appId);
+    getMyWorkflows(currentWorkgroupId);
   });
 
   //Prepare logout button
   $("#mapping-ui #logout-btn").on("click", onLogout);
 
-  return identClient.getWorkgroupMappings(appId).then(async (mappings) => {
-    if (mappings && mappings.length) {
-      return await mappingForm.showWorkgroupMappings(mappings);
-    }
-
-    return await mappingForm.showUnmappedColumns(appId);
-  }, onError);
+  //If mapping already exists -> Update Mapping
+  if (mapping.models.length > 1) {
+    return await mappingForm.showWorkgroupMappings(mapping);
+  } else {
+    //else -> Create Mapping
+    return await mappingForm.showUnmappedColumns(mapping, currentWorkgroupId);
+  }
 }
 
 async function onSubmitMappingForm(): Promise<unknown> {
   return initializeBaselining(mappingForm);
+}
+
+async function onSubmitMappingUpdate(): Promise<unknown> {
+  return excelWorker.updateMappings(mappingForm);
 }
 
 function startBaselining(): Promise<void> {
