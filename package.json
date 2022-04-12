@@ -16,7 +16,7 @@
     "build": "webpack -p --mode production --https false",
     "build:dev": "webpack --mode development --https false",
     "build-dev": "webpack --mode development --https false && echo . && echo . && echo . && echo Please use 'build:dev' instead of 'build-dev'.",
-    "dev-server": "webpack-dev-server --env.BASELINE_API_URL=0.pgrok.provide.services:36619 --env.WEBSOCKET_URL=0.pgrok.provide.services:38941 --env.IDENT_URL=0.pgrok.provide.services:35485 --mode development",
+    "dev-server": "webpack-dev-server --env.BASELINE_API_URL=https://0.pgrok.provide.services:38039 --env.WEBSOCKET_URL=https://0.pgrok.provide.services:39727 --env.IDENT_URL= --mode development",
     "lint": "office-addin-lint check",
     "lint:fix": "office-addin-lint fix",
     "prettier": "office-addin-lint prettier",
@@ -40,7 +40,7 @@
     "node-esapi": "^0.0.1",
     "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
-    "provide-js": "^1.7.3",
+    "provide-js": "^1.7.8",
     "regenerator-runtime": "^0.13.7",
     "stream-browserify": "^3.0.0",
     "uuid-validate": "0.0.3"

@@ -65,6 +65,9 @@ export interface ProvideClient {
 
   // eslint-disable-next-line no-unused-vars
   createWorkgroupMapping(params: any): Promise<Mapping>;
+
+  // eslint-disable-next-line no-unused-vars
+  updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void>;
 }
 
 class ProvideClientImpl implements ProvideClient {

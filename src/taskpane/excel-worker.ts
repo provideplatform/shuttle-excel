@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // NOTE: Logic of working with Excel
 
-import { Application, Workflow, Workstep, Organization } from "@provide/types";
+import { Application, Workflow, Workstep, Organization, Mapping } from "@provide/types";
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
@@ -25,6 +25,10 @@ export class ExcelWorker {
     paginate(workflows, "workflows-list");
   }
 
+  async showMappings(mappings: Mapping[]): Promise<void> {
+    paginate(mappings, "mappings-list");
+  }
+
   async showMappingButton(): Promise<void> {
     var completelist = document.getElementById("workgroup-mapping");
     completelist.innerHTML = "";
@@ -40,6 +44,10 @@ export class ExcelWorker {
   async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {
     //return baseline.createTableMappings(mappingForm);
     return baseline.createSheetMappings(mappingForm);
+  }
+
+  async updateMappings(mappingForm: MappingForm): Promise<unknown> {
+    return baseline.updateTableMappings(mappingForm);
   }
 
   startBaselineService(identClient: ProvideClient): Promise<void> {

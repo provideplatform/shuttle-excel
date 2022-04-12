@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { onError } from "../common/common";
 import { baseline } from "./index";
 import { store } from "../settings/store";
@@ -139,6 +140,60 @@ export class ExcelAPI {
   }
 
   async createMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void> {
+    //Create local tables to store the mappings
+    await store.close();
+    await store.createInboundAndOutboundTables(excelTable);
+
+    var tableName = mappingForm.getFormSheetName().toString();
+    var columnNames = mappingForm.getFormSheetColumnNames();
+    // eslint-disable-next-line no-unused-vars
+    var workgroupId = mappingForm.getFormWorkgroupID().toString();
+
+    var mappingTable = $("#mapping-form #table-name").val().toString().replace(/\//g, "//");
+    await store.setTableName(mappingTable, tableName);
+
+    var mappingPrimaryKey = $("#mapping-form #primary-key").val().toString().replace(/\//g, "//");
+    await store.setPrimaryKey(tableName, mappingPrimaryKey);
+
+    var fields = [];
+
+    fields = columnNames.map(async (columnName) => {
+      var columnID = await this.trim(columnName.toString());
+      var columnType = $("#" + columnID)
+        .val()
+        .toString();
+      await store.setColumnMapping(tableName, columnName.toString(), columnName.toString());
+      var tableColumn = {
+        name: columnName.toString().replace(/\//g, "//"),
+        type: columnType,
+      };
+
+      return tableColumn;
+    });
+
+    var allFields = await Promise.all(fields);
+
+    var table = {
+      type: mappingTable,
+      primary_key: mappingPrimaryKey,
+      fields: allFields,
+    };
+
+    var models = [];
+    models.push(table);
+
+    var mapping = {
+      name: mappingTable,
+      description: null,
+      type: "mapping_type",
+      workgroup_id: workgroupId,
+      models: models,
+    };
+
+    await identClient.createWorkgroupMapping(mapping);
+  }
+
+  async updateMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void> {
     //Create local tables to store the mappings
     await store.close();
     await store.createInboundAndOutboundTables(excelTable);

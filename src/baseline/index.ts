@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { excelAPI } from "./api";
 import { outboundMessage } from "./outbound";
 import { inboundMessage } from "./inbound";
@@ -26,6 +27,16 @@ export class Baseline {
         } else {
           await excelAPI.saveMappings(mappingForm);
         }
+      });
+      await context.sync();
+      await excelAPI.changeButtonColor();
+    }).catch(this.catchError);
+  }
+
+  async updateTableMappings(mappingForm: MappingForm): Promise<unknown> {
+    return await Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.createTableListener(context).then(async (tableName) => {
+        await excelAPI.updateMappings(this._identClient, mappingForm, tableName);
       });
       await context.sync();
       await excelAPI.changeButtonColor();

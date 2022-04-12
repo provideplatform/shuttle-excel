@@ -124,7 +124,7 @@
         </div>
         <div id="workflows-list-paginator" class="paginator d-flex justify-content-center"></div> 
         <div>
-          <button id="create-workflow" class="btn btn-primary btn-sm float-right">Create</button>
+          <button hidden id="create-workflow" class="btn btn-primary btn-sm float-right">Create</button>
         </div>
         <div>
           <!-- <button id="start-baselining-btn" class="btn btn-primary btn-sm float-right">Start Baselining</button>-->
@@ -184,7 +184,7 @@
         </div>
         <div id="worksteps-list-paginator" class="paginator d-flex justify-content-center"></div> 
         <div>
-          <button id="create-workstep" class="btn btn-primary btn-sm float-right">Create</button>
+          <button hidden id="create-workstep" class="btn btn-primary btn-sm float-right">Create</button>
         </div>
       </div>
 
@@ -249,6 +249,30 @@
       </div>
     </div>
 
+    <div id="mappings-list-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none">
+      <div class="card-header border-0 bg-transparent">
+        <button id="mappings-list-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
+            aria-hidden="true"></i></button>
+      </div>
+      <div class="card-body border-0 bg-transparent container text-truncate lead text-md-left">
+        <div class="h3"> Mappings
+          <button id="refresh-mappings-list-btn" class="btn-sm btn-secondary"
+            style="background-color: transparent; border: transparent;"><i class="fa">&#xf021;</i></button>
+        </div>
+        <div id="mappings-list" class="content list-group">
+        </div>
+        <div id="mappings-list-paginator" class="paginator d-flex justify-content-center"></div> 
+      </div>
+
+      <div class="card-footer border-0 bg-transparent container text-muted">
+        <div id="user-name" class="row text-truncate text-light float-right mb-2"></div>
+        <div class="row text-monospace">
+          <div class="col text-truncate">2021 Provide</div>
+          <button id="logout-btn" class="btn btn-light float-right py-0"><i class="fas fa-sign-out-alt"></i></button>
+        </div>
+      </div>
+    </div>
+
     <div id="mapping-ui" class="card h-100 border-0 bg-transparent text-light" style="display: none; min-height: 29rem">
       <div class="card-header border-0 bg-transparent">
         <button id="mapping-back-btn" class="btn btn-light float-left py-0"><i class="fas fa-arrow-left"
@@ -264,6 +288,7 @@
           <div>
             <button type="button" id="mapping-form-btn" class="btn btn-primary btn-lg btn-block text-light shadow-none">
             </button>
+            <button type="button" id="mapping-update-btn" style="display: none">Update</button>
           </div>
         </form>
       </div>
