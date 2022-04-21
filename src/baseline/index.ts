@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { excelAPI } from "./api";
+import { Mapping } from "@provide/types";
 import { outboundMessage } from "./outbound";
 import { inboundMessage } from "./inbound";
 import { onError } from "../common/common";
@@ -6,7 +8,6 @@ import { ProvideClient } from "src/client/provide-client";
 import { NatsClientFacade as NatsClient } from "../client/nats-listener";
 // eslint-disable-next-line no-unused-vars
 import { ProtocolMessage } from "../models/protocolMessage";
-import { MappingForm } from "../taskpane/mappingForm";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
@@ -16,35 +17,37 @@ export class Baseline {
   _natsClient: NatsClient;
 
   //Initialize baseline
-  async createTableMappings(mappingForm: MappingForm): Promise<unknown> {
+  async createTableMappings(mapping: Mapping): Promise<unknown> {
     return await Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.createTableListener(context).then(async (tableName) => {
-        var button = document.getElementById("mapping-form-btn").innerHTML;
-
-        if (button == "Create Mapping") {
-          await excelAPI.createMappings(this._identClient, mappingForm, tableName);
-        } else {
-          await excelAPI.saveMappings(mappingForm);
-        }
+      await excelAPI.createTableListener(context).then(async () => {
+        await excelAPI.createMappings(this._identClient, mapping);
       });
       await context.sync();
       await excelAPI.changeButtonColor();
     }).catch(this.catchError);
   }
 
-  async createSheetMappings(mappingForm: MappingForm): Promise<unknown> {
+  async updateTableMappings(mapping: Mapping): Promise<unknown> {
     return await Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.createSheetListener(context).then(async (sheetName) => {
-        var button = document.getElementById("mapping-form-btn").innerHTML;
+      await excelAPI.updateMappings(this._identClient, mapping);
+      await context.sync();
+    }).catch(this.catchError);
+  }
 
-        if (button == "Create Mapping") {
-          await excelAPI.createMappings(this._identClient, mappingForm, sheetName);
-        } else {
-          await excelAPI.saveMappings(mappingForm);
-        }
+  async createSheetMappings(mapping: Mapping): Promise<unknown> {
+    return await Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.createSheetListener(context).then(async () => {
+        await excelAPI.createMappings(this._identClient, mapping);
       });
       await context.sync();
       await excelAPI.changeButtonColor();
+    }).catch(this.catchError);
+  }
+
+  async updateSheetMappings(mapping: Mapping): Promise<unknown> {
+    return await Excel.run(async (context: Excel.RequestContext) => {
+      await excelAPI.updateMappings(this._identClient, mapping);
+      await context.sync();
     }).catch(this.catchError);
   }
 

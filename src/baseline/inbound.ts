@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { onError } from "../common/common";
 import { store } from "../settings/store";
 import { excelHandler } from "./excel-handler";
@@ -14,14 +15,14 @@ export class InBound {
     await this.disableTableListener(context);
 
     var tableName = await excelHandler.getSheetName(context);
-
-    var primaryKeyColumnName = await store.getPrimaryKeyField(tableName);
+    let tableID = (await store.getTableID(tableName)).toString();
+    let primaryKeyColumnName = await store.getPrimaryKeyColumnName(tableID);
 
     var dataColumn = Object.keys(msg.payload.data)[0];
     var address;
     var id;
 
-    var idExists = await store.keyExists(tableName, msg.baselineID, "In");
+    var idExists = await store.keyExists(tableID, msg.baselineID, "baselineID");
 
     var primaryKeyColumnAddress = await excelHandler.getSheetColumnAddress(context, primaryKeyColumnName);
 
@@ -30,14 +31,14 @@ export class InBound {
 
       //map it with baseline ID given in the message\
       //Set baselineID in table
-      await store.setInboundTable(tableName, msg.baselineID, [id, dataColumn]);
+      await store.setBaselineID(tableID, id, msg.baselineID);
 
       //Add record in table
       await this.addNewIDToTable(context, id, primaryKeyColumnAddress);
 
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
     } else {
-      id = (await store.getPrimaryKeyId(tableName, msg.baselineID))[0];
+      id = await store.getPrimaryKeyId(tableID, msg.baselineID);
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
     }
 
