@@ -67,7 +67,7 @@ export interface ProvideClient {
   createWorkgroupMapping(params: any): Promise<Mapping>;
 
   // eslint-disable-next-line no-unused-vars
-  updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void>;
+  updateWorkgroupMapping(mappingId: string, params: Object): Promise<void>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -166,7 +166,7 @@ class ProvideClientImpl implements ProvideClient {
     return retVal["results"];
   }
 
-  async updateWorkgroupMapping(appId: string, mappingId: string, params: Object): Promise<void> {
+  async updateWorkgroupMapping(mappingId: string, params: Object): Promise<void> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     await this._orgAuthContext.get(async (accessToken) => {

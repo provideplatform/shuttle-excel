@@ -4,7 +4,7 @@ import { baseline } from "./index";
 import { store } from "../settings/store";
 import { ProvideClient } from "src/client/provide-client";
 import * as $ from "jquery";
-import { MappingForm } from "src/taskpane/mappingForm";
+import { Mapping } from "@provide/types";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, OfficeExtension, Office */
@@ -110,141 +110,104 @@ export class ExcelAPI {
     }
   }
 
-  async saveMappings(mappingForm: MappingForm): Promise<void> {
-    var tableName = await this.trim(mappingForm.getFormSheetName().toString());
-    var primaryKey = await this.trim(mappingForm.getFormPrimaryKey().toString());
-    var columnNames = mappingForm.getFormSheetColumnNames();
+  async createMappings(identClient: ProvideClient, mapping: Mapping): Promise<void> {
+    var receivedSORModel = mapping.models[0];
 
-    //Map table name with mapping ID
-    var excelTable = $("#" + tableName).val();
+    var mappingForm = $("#mapping-form form")
+      .serializeArray()
+      .reduce(function (obj, item) {
+        obj[item.name] = item.value;
+        return obj;
+      }, {});
 
-    var tableExists = await store.tableExists("tableNames", excelTable.toString());
+    var tableName = mappingForm["tableName"].toString();
+    var primaryKey = mappingForm["primaryKey"].toString();
 
-    if (!tableExists) {
-      await store.close();
-      await store.createInboundAndOutboundTables(excelTable.toString());
-    }
-
-    await store.setTableName(tableName, excelTable.toString());
-
-    var excelTablePrimaryKey = $("#" + primaryKey).val();
-    await store.setPrimaryKey(excelTable.toString(), excelTablePrimaryKey.toString());
-
-    columnNames.map(async (column) => {
-      var columnID = await this.trim(column.toString());
-
-      var excelColumn = $("#" + columnID).val();
-
-      await store.setColumnMapping(tableName, column.toString(), excelColumn.toString());
-    });
-  }
-
-  async createMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void> {
-    //Create local tables to store the mappings
+    //Create Store Name = refModelId, Stored Data = { primary key: baselineID}
     await store.close();
-    await store.createInboundAndOutboundTables(excelTable);
+    await store.createTable(receivedSORModel.refModelId, "primaryKeyID", "baselineID", "baselineID");
 
-    var tableName = mappingForm.getFormSheetName().toString();
-    var columnNames = mappingForm.getFormSheetColumnNames();
-    // eslint-disable-next-line no-unused-vars
-    var workgroupId = mappingForm.getFormWorkgroupID().toString();
+    //Update Store Name = "TableNames", Stored Data = { tableName: refModelId}
+    await store.setTableID(tableName, receivedSORModel.refModelId);
 
-    var mappingTable = $("#mapping-form #table-name").val().toString().replace(/\//g, "//");
-    await store.setTableName(mappingTable, tableName);
-
-    var mappingPrimaryKey = $("#mapping-form #primary-key").val().toString().replace(/\//g, "//");
-    await store.setPrimaryKey(tableName, mappingPrimaryKey);
+    //Update Store Name = "TablePrimaryKeys", Stored Data = { refModelId: primaryKeyColumn}
+    await store.setPrimaryKeyColumnName(receivedSORModel.refModelId, primaryKey);
 
     var fields = [];
 
-    fields = columnNames.map(async (columnName) => {
-      var columnID = await this.trim(columnName.toString());
-      var columnType = $("#" + columnID)
-        .val()
-        .toString();
-      await store.setColumnMapping(tableName, columnName.toString(), columnName.toString());
-      var tableColumn = {
-        name: columnName.toString().replace(/\//g, "//"),
-        type: columnType,
+    //Add my fields
+    fields = receivedSORModel.fields.map(async (field) => {
+      var column = mappingForm[field.refFieldId];
+      var columnToField = {
+        name: column,
+        type: field.type,
+        refFieldId: field.refFieldId,
       };
 
-      return tableColumn;
+      return columnToField;
     });
 
     var allFields = await Promise.all(fields);
 
+    //Add my table
     var table = {
-      type: mappingTable,
-      primary_key: mappingPrimaryKey,
+      type: tableName,
+      primary_key: primaryKey,
       fields: allFields,
     };
 
+    //Push my model to the exisiting mapping
     var models = [];
+    models.push(receivedSORModel);
     models.push(table);
 
-    var mapping = {
-      name: mappingTable,
-      description: null,
-      type: "mapping_type",
-      workgroup_id: workgroupId,
-      models: models,
-    };
+    var myMapping = mapping;
+    myMapping.models = models;
 
-    await identClient.createWorkgroupMapping(mapping);
+    await identClient.updateWorkgroupMapping(mapping.id, myMapping);
   }
 
-  async updateMappings(identClient: ProvideClient, mappingForm: MappingForm, excelTable: string): Promise<void> {
-    //Create local tables to store the mappings
-    await store.close();
-    await store.createInboundAndOutboundTables(excelTable);
-
-    var tableName = mappingForm.getFormSheetName().toString();
-    var columnNames = mappingForm.getFormSheetColumnNames();
-    // eslint-disable-next-line no-unused-vars
-    var workgroupId = mappingForm.getFormWorkgroupID().toString();
-
-    var mappingTable = $("#mapping-form #table-name").val().toString().replace(/\//g, "//");
-    await store.setTableName(mappingTable, tableName);
-
-    var mappingPrimaryKey = $("#mapping-form #primary-key").val().toString().replace(/\//g, "//");
-    await store.setPrimaryKey(tableName, mappingPrimaryKey);
-
-    var fields = [];
-
-    fields = columnNames.map(async (columnName) => {
-      var columnID = await this.trim(columnName.toString());
-      var columnType = $("#" + columnID)
-        .val()
-        .toString();
-      await store.setColumnMapping(tableName, columnName.toString(), columnName.toString());
-      var tableColumn = {
-        name: columnName.toString().replace(/\//g, "//"),
-        type: columnType,
-      };
-
-      return tableColumn;
-    });
-
-    var allFields = await Promise.all(fields);
-
-    var table = {
-      type: mappingTable,
-      primary_key: mappingPrimaryKey,
-      fields: allFields,
-    };
-
-    var models = [];
-    models.push(table);
-
-    var mapping = {
-      name: mappingTable,
-      description: null,
-      type: "mapping_type",
-      workgroup_id: workgroupId,
-      models: models,
-    };
-
-    await identClient.createWorkgroupMapping(mapping);
+  //TODO
+  async updateMappings(identClient: ProvideClient, mapping: Mapping): Promise<void> {
+    // var excelModel = mapping.models[1];
+    // var mappingForm = $("#mapping-form form")
+    //   .serializeArray()
+    //   .reduce(function (obj, item) {
+    //     obj[item.name] = item.value;
+    //     return obj;
+    //   }, {});
+    // var tableName = mappingForm["tableName"].toString();
+    // var primaryKey = mappingForm["primaryKey"].toString();
+    // var tableExists = await store.tableExists("tableNames", excelModel.type);
+    // if (!tableExists) {
+    //   await store.close();
+    //   await store.createTable(tableName, "primaryKeyID", "baselineID", "baselineID");
+    // }
+    // await store.setTableName(excelModel.refModelId, tableName);
+    // await store.setPrimaryKey(tableName, primaryKey);
+    // var fields = [];
+    // fields = excelModel.fields.map(async (field) => {
+    //   var column = mappingForm[field.refFieldId];
+    //   await store.setColumnMapping(tableName, column.toString(), field.refFieldId);
+    //   var columnToField = {
+    //     name: column,
+    //     type: field.type,
+    //     refFieldId: field.refFieldId,
+    //   };
+    //   return columnToField;
+    // });
+    // var allFields = await Promise.all(fields);
+    // var table = {
+    //   type: tableName,
+    //   primary_key: primaryKey,
+    //   fields: allFields,
+    // };
+    // var models = [];
+    // models.push(excelModel);
+    // models.push(table);
+    // var myMapping = mapping;
+    // myMapping.models = models;
+    // await identClient.updateWorkgroupMapping(mapping.id, myMapping);
   }
 
   async changeButtonColor(): Promise<void> {

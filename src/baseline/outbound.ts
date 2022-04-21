@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { onError } from "../common/common";
 import { Object, BaselineResponse } from "@provide/types";
 import { ProvideClient } from "src/client/provide-client";
@@ -14,28 +15,27 @@ export class OutBound {
     identClient: ProvideClient
   ): Promise<void> {
     try {
+      //Get the primary key ID
       let tableName = await excelHandler.getSheetName(context);
-      let message = await this.createMessage(context, tableName, changedData);
+      let tableID = (await store.getTableID(tableName)).toString();
+      let primaryKeyColumnName = await store.getPrimaryKeyColumnName(tableID);
+      let primaryKeyID = await this.getPrimaryKeyID(context, changedData, primaryKeyColumnName);
 
-      //TO SECURE --> JsonSanitizer.sanitize(JSON.stringify(message))
+      //Check if baselineID exists
+      let baselineIDExists = await store.keyExists(tableID, primaryKeyID);
+
+      //Create the message
+      let message = await this.createMessage(context, primaryKeyID, changedData);
+
       console.log(JSON.stringify(message));
       let baselineResponse: BaselineResponse;
 
-      let recordExists = await store.keyExists(tableName, [message.payload.id, message.type], "Out");
-
-      console.log(recordExists);
-
-      if (!recordExists) {
+      if (!baselineIDExists) {
         baselineResponse = await identClient.sendCreateProtocolMessage(message);
         console.log(baselineResponse);
-        await store.setInboundAndOutboundTables(
-          tableName,
-          [message.payload.id, message.type],
-          baselineResponse.baselineId
-        );
+        await store.setBaselineID(tableID, primaryKeyID, baselineResponse.baselineId);
       } else {
-        let baselineId = await store.getBaselineId(tableName, [message.payload.id, message.type]);
-        console.log("Baseline ID: " + baselineId);
+        let baselineId = await store.getBaselineId(tableID, primaryKeyID);
         baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
         console.log("Baseline message : " + baselineResponse);
       }
@@ -46,12 +46,17 @@ export class OutBound {
 
   private async createMessage(
     context: Excel.RequestContext,
-    tableName: string,
+    primaryKeyID: string,
     changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs
   ): Promise<Object> {
-    let primaryKey = await store.getPrimaryKeyField(tableName);
-    console.log(primaryKey);
-    let id = await this.getPrimaryKeyID(context, changedData, primaryKey);
+    //Get the refModelId (tableName --> refModelId)
+    //Get the primary key column (refModelID --> primaryKeyColumn)
+    //Get the primary key id
+    //TODO: Check if the primary key is mapped to any baselineID
+    //If yes, then resolve workstep ---> updateObject
+    //If no, ask user to create
+
+    let id = primaryKeyID;
     let dataColumnHeader = await excelHandler.getDataColumnHeader(context, changedData);
 
     let message: Object = {} as Object;

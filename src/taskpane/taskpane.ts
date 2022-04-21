@@ -7,7 +7,7 @@ import { alerts, spinnerOff, spinnerOn } from "../common/alerts";
 import { LoginFormData } from "../models/login-form-data";
 import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
-import { mappingForm, MappingForm } from "./mappingForm";
+import { showMappedColumns, showUnmappedColumns } from "./mappingForm";
 import { store } from "../settings/store";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
@@ -82,8 +82,6 @@ function initUi() {
   $("#refresh-mappings-list-btn").on("click", onFillMappings);
   $("#refresh-worksteps-btn").on("click", onFillWorksteps);
   $("#show-jwt-input-btn").on("click", onGetJwtokenDialog);
-  $("#mapping-form-btn").on("click", onSubmitMappingForm);
-  $("#mapping-update-btn").on("click", onSubmitMappingUpdate);
   $("#workflow-form-btn").on("click", onSubmitCreateWorkflowForm);
   $("#workstep-form-btn").on("click", onSubmitCreateWorkstepForm);
 }
@@ -663,26 +661,13 @@ async function confirmMappings(mapping: Mapping): Promise<void> {
 
   //If mapping already exists -> Update Mapping
   if (mapping.models.length > 1) {
-    return await mappingForm.showWorkgroupMappings(mapping);
+    return await showMappedColumns(mapping);
   } else {
     //else -> Create Mapping
-    return await mappingForm.showUnmappedColumns(mapping, currentWorkgroupId);
+    return await showUnmappedColumns(mapping);
   }
-}
-
-async function onSubmitMappingForm(): Promise<unknown> {
-  return initializeBaselining(mappingForm);
-}
-
-async function onSubmitMappingUpdate(): Promise<unknown> {
-  return excelWorker.updateMappings(mappingForm);
 }
 
 function startBaselining(): Promise<void> {
   return excelWorker.startBaselineService(identClient);
-}
-
-async function initializeBaselining(mappingForm: MappingForm): Promise<unknown> {
-  spinnerOn();
-  return excelWorker.createInitialSetup(mappingForm).then(spinnerOff, onError);
 }

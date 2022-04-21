@@ -5,7 +5,6 @@ import { Application, Workflow, Workstep, Organization, Mapping } from "@provide
 import { onError } from "../common/common";
 import { baseline } from "../baseline/index";
 import { ProvideClient } from "src/client/provide-client";
-import { MappingForm } from "./mappingForm";
 import { paginate } from "../common/paginate";
 
 // eslint-disable-next-line no-unused-vars
@@ -41,13 +40,13 @@ export class ExcelWorker {
     paginate(worksteps, "worksteps-list");
   }
 
-  async createInitialSetup(mappingForm: MappingForm): Promise<unknown> {
-    //return baseline.createTableMappings(mappingForm);
-    return baseline.createSheetMappings(mappingForm);
+  async createInitialSetup(mapping): Promise<unknown> {
+    //return baseline.createTableMappings(mapping);
+    return baseline.createSheetMappings(mapping);
   }
 
-  async updateMappings(mappingForm: MappingForm): Promise<unknown> {
-    return baseline.updateTableMappings(mappingForm);
+  async updateMappings(mapping): Promise<unknown> {
+    return baseline.updateTableMappings(mapping);
   }
 
   startBaselineService(identClient: ProvideClient): Promise<void> {

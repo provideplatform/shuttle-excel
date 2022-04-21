@@ -128,8 +128,6 @@ class SessionStorageSettings extends StorageSettings {
     super(window.sessionStorage);
   }
 }
-
-//TO SECURE --> . s://www.icloud.com/iclouddrive/0pw1tr6bEg2LpkSPYJ5U1awVg#IETSS2014_0029_final-2
 class IndexedDBSettings {
   protected db: IDBDatabase;
   private database: string;
@@ -138,9 +136,9 @@ class IndexedDBSettings {
   constructor(database: string) {
     this.database = database;
   }
-  async createObjectStore(tableNames: string[], keyPath: any[]): Promise<void> {
+  async createObjectStore(tableName: string, keyPath: any, indexName?: string, indexKeyPath?: string): Promise<void> {
     try {
-      return new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         //Create or open the database
         //await this.db.close();
         this.version++;
@@ -153,16 +151,17 @@ class IndexedDBSettings {
         //on upgrade needed, create object store
         request.onupgradeneeded = async (e) => {
           this.db = (<IDBOpenDBRequest>e.target).result;
-          tableNames.map(async (tableName, i) => {
-            await this.db.createObjectStore(tableName, { keyPath: keyPath[i] });
-          });
+          var store = await this.db.createObjectStore(tableName, { keyPath: keyPath });
+          if (indexName) {
+            await store.createIndex(indexName, indexKeyPath);
+          }
         };
 
         //on success
         request.onsuccess = (e) => {
           this.db = (<IDBOpenDBRequest>e.target).result;
           this.version = this.db.version;
-          resolve();
+          resolve(this.db);
         };
 
         //on error
@@ -251,11 +250,48 @@ class IndexedDBSettings {
     return record;
   }
 
+  async getByIndex(tableName: string, indexName: string, key: string): Promise<any> {
+    var record = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(tableName, "readonly");
+      const store = tx.objectStore(tableName);
+      const index = store.index(indexName);
+      const request = index.get(key);
+
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+
+    return record;
+  }
+
   async count(tableName: string, key?: any): Promise<number> {
     var recordCount: number = await new Promise((resolve, reject) => {
       const tx = this.db.transaction(tableName, "readonly");
       const store = tx.objectStore(tableName);
       const request = store.count(key);
+
+      request.onsuccess = () => {
+        resolve(request.result);
+      };
+
+      request.onerror = () => {
+        reject(request.error);
+      };
+    });
+    return recordCount;
+  }
+
+  async countByIndex(tableName: string, indexName: string, key?: any): Promise<number> {
+    var recordCount: number = await new Promise((resolve, reject) => {
+      const tx = this.db.transaction(tableName, "readonly");
+      const store = tx.objectStore(tableName);
+      const index = store.index(indexName);
+      const request = index.count(key);
 
       request.onsuccess = () => {
         resolve(request.result);
