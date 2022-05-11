@@ -255,6 +255,8 @@ class ProvideClientImpl implements ProvideClient {
     return retVal;
   }
 
+  async resolveWorkstep(worksteps[]: Workstep[]): Promise<Workstep>{}
+
   async connectNatsClient(): Promise<void> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);

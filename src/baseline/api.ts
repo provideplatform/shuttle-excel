@@ -99,7 +99,8 @@ export class ExcelAPI {
 
       await context.sync();
 
-      var sheetExists = await store.tableExists("tablePrimaryKeys", sheet.name);
+      var sheetID = (await store.getTableID(sheet.name)).toString();
+      var sheetExists = await store.tableExists("tablePrimaryKeys", sheetID);
 
       if (sheetExists) {
         sheet.onChanged.add(this.onWorksheetChange);
