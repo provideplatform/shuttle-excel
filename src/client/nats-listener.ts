@@ -4,7 +4,7 @@ export class NatsClientFacade {
   //public static readonly DEFAULT_HOST = 'provide.services';
   //Change the Host as per the stack
   // eslint-disable-next-line no-undef
-  public static readonly DEFAULT_HOST = `${WEBSOCKET_URL}`;
+  public static readonly DEFAULT_HOST = "baseline.provide.services/api/v1/" || `${WEBSOCKET_URL}`;
   public static readonly DEFAULT_PATH = "";
   private readonly bearerToken?: string;
   private readonly natsUrl: string;

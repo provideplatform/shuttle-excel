@@ -9,6 +9,7 @@ import { onError } from "../common/common";
 import { excelWorker } from "./excel-worker";
 import { showMappedColumns, showUnmappedColumns } from "./mappingForm";
 import { store } from "../settings/store";
+import { localStore } from "../settings/settings";
 import { TokenStr } from "../models/common";
 import { User } from "../models/user";
 import { showJwtInputDialog } from "../dialogs/dialogs-helpers";
@@ -37,6 +38,7 @@ const stubAuth = false;
 let identClient: ProvideClient | null;
 let currentWorkgroupId: string | null;
 let currentWorkflowId: string | null;
+let _sendMessageFlag = false;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
@@ -373,13 +375,17 @@ async function activateOrganizationButtons(organizations: Organization[]): Promi
   });
 }
 
-function getMyWorkgroups(): Promise<void> {
+export function getMyWorkgroups(sendMessageFlag?): Promise<void> {
   if (!identClient) {
     setUiForLogin();
     return;
   }
 
   setUiforWorkgroups();
+
+  if (sendMessageFlag) {
+    _sendMessageFlag = true;
+  }
 
   //Prepare back button
   $("#workgroup-back-btn").on("click", function () {
@@ -446,7 +452,13 @@ async function activateWorkflowButtons(workflows: Workflow[]): Promise<void> {
   workflows.map((workflow) => {
     //Get the buttons elements
     $("#" + workflow.id).on("click", function () {
-      getMyWorksteps(workflow.id);
+      if (_sendMessageFlag) {
+        //localStorage
+        _sendMessageFlag = false;
+        localStore.setWorkflowID(workflow.id);
+      } else {
+        getMyWorksteps(workflow.id);
+      }
     });
   });
 }

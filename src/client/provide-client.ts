@@ -11,6 +11,7 @@ import {
   Mapping,
   Workflow,
   Workstep,
+  ProtocolMessagePayload,
 } from "@provide/types";
 import { Ident, identClientFactory, nchainClientFactory, vaultClientFactory, baselineClientFactory } from "provide-js";
 import { Uuid, TokenStr } from "../models/common";
@@ -68,6 +69,11 @@ export interface ProvideClient {
 
   // eslint-disable-next-line no-unused-vars
   updateWorkgroupMapping(mappingId: string, params: Object): Promise<void>;
+
+  // eslint-disable-next-line no-unused-vars
+  resolveWorkstep(worksteps: Workstep[]): Promise<Workstep>;
+
+  executeWorkstep(workflowId: string, workstepId: string, params: any): Promise<ProtocolMessagePayload>;
 }
 
 class ProvideClientImpl implements ProvideClient {
@@ -78,7 +84,7 @@ class ProvideClientImpl implements ProvideClient {
   private _NatsClient: NatsClient;
   private scheme = "https";
   // eslint-disable-next-line no-undef
-  private host = `${BASELINE_API_URL}`;
+  private host = "baseline.provide.services/api/v1/" || `${BASELINE_API_URL}`;
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
@@ -251,6 +257,21 @@ class ProvideClientImpl implements ProvideClient {
     const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
       return await baselineService.createWorkstep(workflowId, params);
+    });
+    return retVal;
+  }
+
+  async resolveWorkstep(worksteps: Workstep[]): Promise<Workstep> {
+    const workstep = worksteps.filter((workstep) => workstep.status != null && workstep.status == "init");
+    return workstep[0];
+  }
+
+  async executeWorkstep(workflowId: string, workstepId: string, params: any): Promise<ProtocolMessagePayload> {
+    var orgID = await this.getOrgID();
+    await this.authorizeOrganization(orgID);
+    const retVal = await this._orgAuthContext.get(async (accessToken) => {
+      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
+      return await baselineService.executeWorkstep(workflowId, workstepId, params);
     });
     return retVal;
   }

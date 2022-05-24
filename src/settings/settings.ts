@@ -352,6 +352,23 @@ class Settings {
   }
 }
 
+class LocalStore {
+  private readonly NAME = "__docSettings";
+
+  async getWorkflowID(): Promise<string | null> {
+    const value = await localStorageSettings.get("currentWorkflowID");
+    return (value as string) || null;
+  }
+
+  async setWorkflowID(workflowID: string): Promise<void> {
+    await localStorageSettings.set("currentWorkflowID", workflowID);
+  }
+
+  async removeWorkflowID(): Promise<void> {
+    await localStorageSettings.remove("currentWorkflowID");
+  }
+}
+
 class SessionSettings {
   async getRefreshToken(): Promise<TokenStr | null> {
     const value = await sessionStorageSettings.get("refreshToken");
@@ -453,5 +470,6 @@ class SessionSettings {
 export const settings = new Settings();
 export const indexedDatabase = new IndexedDBSettings("BaselineDB");
 export const sessionSettings = new SessionSettings();
+export const localStore = new LocalStore();
 //export const diskStorage = new DiskStorageSettings();
 //export const fileStore = new FileStorageSettings();

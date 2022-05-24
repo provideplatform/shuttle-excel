@@ -19,8 +19,8 @@ export class Baseline {
   //Initialize baseline
   async createTableMappings(mapping: Mapping): Promise<unknown> {
     return await Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.createTableListener(context).then(async () => {
-        await excelAPI.createMappings(this._identClient, mapping);
+      await excelAPI.createMappings(this._identClient, mapping).then(async () => {
+        await excelAPI.createTableListener(context);
       });
       await context.sync();
       await excelAPI.changeButtonColor();
@@ -36,8 +36,8 @@ export class Baseline {
 
   async createSheetMappings(mapping: Mapping): Promise<unknown> {
     return await Excel.run(async (context: Excel.RequestContext) => {
-      await excelAPI.createSheetListener(context).then(async () => {
-        await excelAPI.createMappings(this._identClient, mapping);
+      await excelAPI.createMappings(this._identClient, mapping).then(async () => {
+        await excelAPI.createSheetListener(context);
       });
       await context.sync();
       await excelAPI.changeButtonColor();

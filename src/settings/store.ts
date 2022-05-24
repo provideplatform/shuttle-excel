@@ -22,10 +22,11 @@ export class Store {
       : await db.createObjectStore(tableName, keypath);
   }
 
-  async setBaselineID(tableName: string, key: string, value: string) {
+  async setBaselineIDAndWorkflowID(tableName: string, key: string, value: any) {
     const record = {};
     record["primaryKeyID"] = key;
-    record["baselineID"] = value;
+    record["baselineID"] = value[0];
+    record["workflowID"] = value[1];
 
     await db.set(tableName, record);
   }
@@ -68,10 +69,9 @@ export class Store {
     return tableName;
   }
 
-  async getBaselineId(tableName: string, key: string): Promise<string> {
+  async getBaselineIdAndWorkflowID(tableName: string, key: string): Promise<any[]> {
     var record: Record = await db.get(tableName, key);
-
-    return record.baselineID;
+    return [record.baselineID, record.workflowID];
   }
 
   async getPrimaryKeyId(tableName: string, key: string): Promise<any> {
