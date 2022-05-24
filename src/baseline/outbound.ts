@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { onError } from "../common/common";
-import { Object, BaselineResponse } from "@provide/types";
+import { Object, BaselineResponse, Workstep, ProtocolMessagePayload } from "@provide/types";
 import { ProvideClient } from "src/client/provide-client";
 import { excelHandler } from "./excel-handler";
 import { store } from "../settings/store";
+import { localStore } from "../settings/settings";
+import { getMyWorkgroups } from "../taskpane/taskpane";
 
 // eslint-disable-next-line no-unused-vars
 /* global Excel, Office, OfficeExtension */
@@ -29,13 +31,40 @@ export class OutBound {
 
       console.log(JSON.stringify(message));
       let baselineResponse: BaselineResponse;
+      var worksteps;
+      var workstep: Workstep;
+      var protocolMessage: ProtocolMessagePayload;
 
       if (!baselineIDExists) {
-        baselineResponse = await identClient.sendCreateProtocolMessage(message);
+        //Get the workflowID from localStorage (Do While)
+        await getMyWorkgroups(true);
+        var workflowID = null;
+        do {
+          workflowID = await localStore.getWorkflowID();
+        } while (workflowID == null);
+
+        //RESOLVE workstep
+        worksteps = await identClient.getWorksteps(workflowID);
+        workstep = await identClient.resolveWorkstep(worksteps);
+
+        //EXECUTE WORKSTEP
+        protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
+        baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+
         console.log(baselineResponse);
-        await store.setBaselineID(tableID, primaryKeyID, baselineResponse.baselineId);
+        await store.setBaselineIDAndWorkflowID(tableID, primaryKeyID, [baselineResponse.baselineId, workflowID]);
+        await localStore.removeWorkflowID();
       } else {
-        let baselineId = await store.getBaselineId(tableID, primaryKeyID);
+        let [baselineId, workflowID] = await store.getBaselineIdAndWorkflowID(tableID, primaryKeyID);
+
+        //RESOLVE workstep
+        worksteps = await identClient.getWorksteps(workflowID);
+        workstep = await identClient.resolveWorkstep(worksteps);
+
+        //EXECUTE WORKSTEP
+        protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
+        baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+
         baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
         console.log("Baseline message : " + baselineResponse);
       }
@@ -54,7 +83,7 @@ export class OutBound {
     //Get the primary key id
     //TODO: Check if the primary key is mapped to any baselineID
     //If yes, then resolve workstep ---> updateObject
-    //If no, ask user to create
+    //If no, ask user to create and store the workflow ID for each row.
 
     let id = primaryKeyID;
     let dataColumnHeader = await excelHandler.getDataColumnHeader(context, changedData);
