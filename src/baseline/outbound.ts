@@ -49,11 +49,15 @@ export class OutBound {
 
         //EXECUTE WORKSTEP
         protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
-        baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+        if (!protocolMessage) {
+          await this.preventEdit(context, changedData);
+        } else {
+          baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
 
-        console.log(baselineResponse);
-        await store.setBaselineIDAndWorkflowID(tableID, primaryKeyID, [baselineResponse.baselineId, workflowID]);
-        await localStore.removeWorkflowID();
+          console.log(baselineResponse);
+          await store.setBaselineIDAndWorkflowID(tableID, primaryKeyID, [baselineResponse.baselineId, workflowID]);
+          await localStore.removeWorkflowID();
+        }
       } else {
         let [baselineId, workflowID] = await store.getBaselineIdAndWorkflowID(tableID, primaryKeyID);
 
@@ -63,10 +67,14 @@ export class OutBound {
 
         //EXECUTE WORKSTEP
         protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
-        baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+        if (!protocolMessage) {
+          await this.preventEdit(context, changedData);
+        } else {
+          baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
 
-        baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
-        console.log("Baseline message : " + baselineResponse);
+          baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
+          console.log("Baseline message : " + baselineResponse);
+        }
       }
     } catch {
       this.catchError;
@@ -125,6 +133,19 @@ export class OutBound {
     } catch {
       this.catchError;
     }
+  }
+
+  private async preventEdit(
+    context: Excel.RequestContext,
+    changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs
+  ): Promise<void> {
+    var range = context.workbook.worksheets.getActiveWorksheet().getRange();
+    range.format.protection.locked = false;
+
+    var cell = context.workbook.worksheets.getActiveWorksheet().getRange(changedData.address);
+    cell.format.protection.locked = true;
+
+    await context.sync();
   }
 
   private catchError(error: any): void {
