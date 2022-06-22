@@ -14,7 +14,7 @@ export class OutBound {
   async send(
     context: Excel.RequestContext,
     changedData: Excel.TableChangedEventArgs | Excel.WorksheetChangedEventArgs,
-    identClient: ProvideClient
+    prvdClient: ProvideClient
   ): Promise<void> {
     try {
       //Get the primary key ID
@@ -29,53 +29,55 @@ export class OutBound {
       //Create the message
       let message = await this.createMessage(context, primaryKeyID, changedData);
 
-      console.log(JSON.stringify(message));
-      let baselineResponse: BaselineResponse;
-      var worksteps;
-      var workstep: Workstep;
-      var protocolMessage: ProtocolMessagePayload;
+      // console.log(JSON.stringify(message));
+      // let baselineResponse: BaselineResponse;
+      // var worksteps;
+      // var workstep: Workstep;
+      // var protocolMessage: ProtocolMessagePayload;
 
-      if (!baselineIDExists) {
-        //Get the workflowID from localStorage (Do While)
-        await getMyWorkgroups(true);
-        var workflowID = null;
-        do {
-          workflowID = await localStore.getWorkflowID();
-        } while (workflowID == null);
+      // if (!baselineIDExists) {
+      //   //Get the workflowID from localStorage
+      //   await getMyWorkgroups(true);
+      //   var workflowID = null;
+      //   do {
+      //     workflowID = await localStore.getWorkflowID();
+      //   } while (workflowID == null);
 
-        //RESOLVE workstep
-        worksteps = await identClient.getWorksteps(workflowID);
-        workstep = await identClient.resolveWorkstep(worksteps);
+      //   //RESOLVE workstep
+      //   worksteps = await prvdClient.getWorksteps(workflowID);
+      //   workstep = await prvdClient.resolveWorkstep(worksteps);
 
-        //EXECUTE WORKSTEP
-        protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
-        if (!protocolMessage) {
-          await this.preventEdit(context, changedData);
-        } else {
-          baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+      //   //EXECUTE WORKSTEP
+      //   protocolMessage = await prvdClient.executeWorkstep(workflowID, workstep.id, message);
+      //   if (!protocolMessage) {
+      //     await this.preventEdit(context, changedData);
+      //   } else {
+      //     baselineResponse = await prvdClient.sendProtocolMessage(protocolMessage);
 
-          console.log(baselineResponse);
-          await store.setBaselineIDAndWorkflowID(tableID, primaryKeyID, [baselineResponse.baselineId, workflowID]);
-          await localStore.removeWorkflowID();
-        }
-      } else {
-        let [baselineId, workflowID] = await store.getBaselineIdAndWorkflowID(tableID, primaryKeyID);
+      //     console.log(baselineResponse);
+      //     await store.setBaselineIDAndWorkflowID(tableID, primaryKeyID, [baselineResponse.baselineId, workflowID]);
+      //     await localStore.removeWorkflowID();
+      //   }
+      // } else {
+      //   let [baselineId, workflowID] = await store.getBaselineIdAndWorkflowID(tableID, primaryKeyID);
 
-        //RESOLVE workstep
-        worksteps = await identClient.getWorksteps(workflowID);
-        workstep = await identClient.resolveWorkstep(worksteps);
+      //   //RESOLVE workstep
+      //   worksteps = await prvdClient.getWorksteps(workflowID);
+      //   workstep = await prvdClient.resolveWorkstep(worksteps);
 
-        //EXECUTE WORKSTEP
-        protocolMessage = await identClient.executeWorkstep(workflowID, workstep.id, message);
-        if (!protocolMessage) {
-          await this.preventEdit(context, changedData);
-        } else {
-          baselineResponse = await identClient.sendCreateProtocolMessage(protocolMessage);
+      //   //EXECUTE WORKSTEP
+      //   protocolMessage = await prvdClient.executeWorkstep(workflowID, workstep.id, message);
+      //   if (!protocolMessage) {
+      //     await this.preventEdit(context, changedData);
+      //   } else {
+      //     baselineResponse = await prvdClient.sendProtocolMessage(protocolMessage);
+      //     console.log("Baseline message : " + baselineResponse);
+      //   }
+      // }
 
-          baselineResponse = await identClient.sendUpdateProtocolMessage(baselineId, message);
-          console.log("Baseline message : " + baselineResponse);
-        }
-      }
+      //Send protocol message
+      var baselineResponse = await prvdClient.sendProtocolMessage(message);
+      console.log("Baseline message : " + baselineResponse);
     } catch {
       this.catchError;
     }

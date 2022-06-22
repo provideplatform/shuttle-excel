@@ -38,10 +38,10 @@ export interface ProvideClient {
   connectNatsClient(): Promise<void>;
 
   // eslint-disable-next-line no-unused-vars
-  sendCreateProtocolMessage(message: Object): Promise<BaselineResponse>;
+  sendProtocolMessage(message: Object): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
-  sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse>;
+  //sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse>;
 
   // eslint-disable-next-line no-unused-vars
   acceptWorkgroupInvitation(inviteToken: TokenStr, organizationId: Uuid): Promise<void>;
@@ -191,25 +191,25 @@ class ProvideClientImpl implements ProvideClient {
     return retval;
   }
 
-  async sendCreateProtocolMessage(message: Object): Promise<BaselineResponse> {
+  async sendProtocolMessage(message: Object): Promise<BaselineResponse> {
     var orgID = await this.getOrgID();
     await this.authorizeOrganization(orgID);
     const retVal = await this._orgAuthContext.get(async (accessToken) => {
       const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return await baselineService.createObject(message);
+      return await baselineService.sendProtocolMessage(message);
     });
     return retVal;
   }
 
-  async sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse> {
-    var orgID = await this.getOrgID();
-    await this.authorizeOrganization(orgID);
-    const retVal = await this._orgAuthContext.get(async (accessToken) => {
-      const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
-      return await baselineService.updateObject(baselineID, message);
-    });
-    return retVal;
-  }
+  // async sendUpdateProtocolMessage(baselineID: string, message: Object): Promise<BaselineResponse> {
+  //   var orgID = await this.getOrgID();
+  //   await this.authorizeOrganization(orgID);
+  //   const retVal = await this._orgAuthContext.get(async (accessToken) => {
+  //     const baselineService = baselineClientFactory(accessToken, this.scheme, this.host);
+  //     return await baselineService.updateObject(baselineID, message);
+  //   });
+  //   return retVal;
+  // }
 
   async getWorkflows(appId: string): Promise<Workflow[]> {
     var orgID = await this.getOrgID();
