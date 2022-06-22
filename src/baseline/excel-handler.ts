@@ -1,5 +1,5 @@
 // eslint-disable-next-line no-unused-vars
-/* global Excel, OfficeExtension, Office */
+/* global Excel */
 
 export class ExcelHandler {
   async getTableName(context: Excel.RequestContext): Promise<string> {
@@ -79,6 +79,15 @@ export class ExcelHandler {
 
     var row = primaryKeyCell.address.split(/\D+/)[1];
     return column + row;
+  }
+
+  async cellDataExits(context: Excel.RequestContext, cellValue: string, columnAddress: string) {
+    let dataRange = context.workbook.worksheets.getActiveWorksheet().getRange(columnAddress + ":" + columnAddress);
+    let cell = dataRange.findOrNullObject(cellValue, { completeMatch: true });
+    await context.sync();
+    if (cell.isNullObject) {
+      return false;
+    } else return true;
   }
 }
 

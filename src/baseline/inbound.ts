@@ -2,6 +2,8 @@
 import { onError } from "../common/common";
 import { store } from "../settings/store";
 import { excelHandler } from "./excel-handler";
+import { localStore } from "../settings/settings";
+import { getMyWorkgroups } from "../taskpane/taskpane";
 
 //TODO
 import { ProtocolMessage } from "../models/protocolMessage";
@@ -22,33 +24,41 @@ export class InBound {
     var address;
     var id;
 
-    var idExists = await store.keyExists(tableID, msg.baselineID, "baselineID");
+    //var idExists = await store.keyExists(tableID, msg.baselineID, "baselineID");
 
     var primaryKeyColumnAddress = await excelHandler.getSheetColumnAddress(context, primaryKeyColumnName);
+    var idExists = await excelHandler.cellDataExits(context, msg.id, primaryKeyColumnAddress);
 
     if (!idExists) {
       id = await this.generateNewPrimaryKeyID(context, primaryKeyColumnAddress);
 
-      //map it with baseline ID given in the message\
-      //Set baselineID in table
-      await store.setBaselineID(tableID, id, msg.baselineID);
+      // //map it with baseline ID given in the message
+      // //Get the workflowID from localStorage (Do While)
+      // await getMyWorkgroups(true);
+      // var workflowID = null;
+      // do {
+      //   workflowID = await localStore.getWorkflowID();
+      // } while (workflowID == null);
+
+      // //Set baselineID in table
+      // await store.setBaselineIDAndWorkflowID(tableID, id, [msg.baselineID, workflowID]);
 
       //Add record in table
       await this.addNewIDToTable(context, id, primaryKeyColumnAddress);
 
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
     } else {
-      id = await store.getPrimaryKeyId(tableID, msg.baselineID);
+      // id = await store.getPrimaryKeyId(tableID, msg.baselineID);
+      id = msg.id;
       address = await excelHandler.getDataCellAddress(context, id, dataColumn, primaryKeyColumnAddress);
     }
 
+    //Update Data
     var range = context.workbook.worksheets.getActiveWorksheet().getRange(address);
-
     range.values = [[msg.payload.data[dataColumn]]];
     range.format.autofitColumns();
     range.format.fill.color = "yellow";
     range.format.font.bold = true;
-
     await context.sync();
 
     //Enable event handler
