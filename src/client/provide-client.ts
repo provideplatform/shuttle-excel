@@ -84,7 +84,7 @@ class ProvideClientImpl implements ProvideClient {
   private _NatsClient: NatsClient;
   private scheme = "https";
   // eslint-disable-next-line no-undef
-  private host = "baseline.provide.services/api/v1/" || `${BASELINE_API_URL}`;
+  private host = "baseline.provide.services" || `${BASELINE_API_URL}`;
 
   constructor(user: User, userAuthContext: AuthContext) {
     this._user = user;
