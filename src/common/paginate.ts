@@ -17,13 +17,13 @@ export const paginate = (items: any[], listName: string) => {
   var parentElement = document.getElementById(`${listName}`);
   parentElement.innerHTML = "";
 
-  items.forEach((item) => {
+  items.forEach((item, index) => {
     var newButton = document.createElement("button");
     newButton.setAttribute("type", "button");
     newButton.setAttribute("class", "list-group-item list-group-item-action");
     newButton.setAttribute("style", "display: none");
     listName === "mappings-list"
-      ? newButton.setAttribute("id", encodeForHTML(item.refMappingId))
+      ? newButton.setAttribute("id", encodeForHTML(index))
       : newButton.setAttribute("id", encodeForHTML(item.id));
     newButton.textContent = item.name;
     listArray.push(newButton);
