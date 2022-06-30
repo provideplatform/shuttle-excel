@@ -647,9 +647,10 @@ async function getMyMappingsList(appId: string): Promise<void> {
 }
 
 async function activateMappingsListButtons(mappings: Mapping[]): Promise<void> {
-  mappings.map((mapping, index) => {
+  console.log('activate mappings list buttons', mappings)
+  mappings.map((mapping) => {
     //Get the buttons elements
-    $("#" + index).on("click", function () {
+    $("#" + mapping.id).on("click", function () {
       confirmMappings(mapping);
     });
   });
