@@ -21,7 +21,7 @@ const updateWorkgroupMappings = async (mapping: Mapping): Promise<void> => {
   }).catch(catchError);
 
   var mappingForm = document.getElementById("mapping-form-options");
-  document.getElementById("mapping-form-header").innerHTML = "Create New Mapping";
+  document.getElementById("mapping-form-header").innerHTML = "Update Mapping";
 
   var pkOptions = await addOptions(sheetColumnNames);
   mappingForm.innerHTML =
@@ -68,7 +68,7 @@ const updateWorkgroupMappings = async (mapping: Mapping): Promise<void> => {
   });
 
   var submitButton = document.getElementById("mapping-form-btn");
-  submitButton.innerHTML = "Create Mapping";
+  submitButton.innerHTML = "Update Mapping";
   submitButton.onclick = function () {
     excelWorker.createInitialSetup(mapping);
   };
@@ -132,7 +132,7 @@ export const showUnmappedColumns = async (mapping: Mapping): Promise<void> => {
   });
 
   var submitButton = document.getElementById("mapping-form-btn");
-  submitButton.innerHTML = "Create Mapping";
+  submitButton.innerHTML = "Update Mapping";
   submitButton.onclick = function () {
     excelWorker.createInitialSetup(mapping);
   };

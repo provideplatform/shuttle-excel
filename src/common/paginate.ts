@@ -22,9 +22,7 @@ export const paginate = (items: any[], listName: string) => {
     newButton.setAttribute("type", "button");
     newButton.setAttribute("class", "list-group-item list-group-item-action");
     newButton.setAttribute("style", "display: none");
-    listName === "mappings-list"
-      ? newButton.setAttribute("id", encodeForHTML(index))
-      : newButton.setAttribute("id", encodeForHTML(item.id));
+    newButton.setAttribute("id", encodeForHTML(item.id))
     newButton.textContent = item.name;
     listArray.push(newButton);
     parentElement.appendChild(newButton);
